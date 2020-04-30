@@ -6,12 +6,29 @@
 
     ```bash
     git clone https://github.com/yingw787/tinydevcrm-saas-starter.git /path/to/repository
+    cd /path/to/repository
     ```
+
+2.  Run:
+
+    ```bash
+    make run-dev
+    ```
+
+    Go to `localhost:8000` and see the debug screen.
 
 ## Overview
 
 This starter template defines skeleton services on top of AWS infrastructure
 learnings such as `tinydevcrm-infra`.
+
+Some features include:
+
+-   Token-based authentication using JSON Web Tokens
+-   API-first backend using Django REST Framework
+-   Operations separation using Docker and `docker-compose`.
+-   Deployment to AWS using Elastic Container Registry, and automated
+    deployments using CodeBuild and CodePipeline.
 
 ## System environment assumptions
 
