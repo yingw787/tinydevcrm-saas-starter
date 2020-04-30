@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: AWS Elastic Container Register (ECR) repository definitions for TinyDevCRM.
+
+Resources:
+  DjangoBackendRepository:
+    Type: "AWS::ECR::Repository"
+    Properties:
+      RepositoryName: tinydevcrm-ecr/app
+
+  PostgreSQLDatabaseRepository:
+    Type: "AWS::ECR::Repository"
+    Properties:
+      RepositoryName: tinydevcrm-ecr/db
+
+  NginxRepository:
+    Type: "AWS::ECR::Repository"
+    Properties:
+      RepositoryName: tinydevcrm-ecr/nginx
