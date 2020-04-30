@@ -15,11 +15,13 @@ learnings such as `tinydevcrm-infra`.
 
 ## System environment assumptions
 
+-   Operating system: Ubuntu 20.04 LTS:
 
-
-## Notable dependencies
-
-- `Django`
-- `nginx`
-- `gunicorn`
-- `docker-compose`
+    ```bash
+    $ lsb_release -a
+    No LSB modules are available.
+    Distributor ID: Ubuntu
+    Description:    Ubuntu 20.04 LTS
+    Release:        20.04
+    Codename:       focal
+    ```
