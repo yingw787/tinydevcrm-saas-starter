@@ -15,8 +15,6 @@
     make run-dev
     ```
 
-    Go to `localhost:8000` and see the debug screen.
-
 ## Overview
 
 This starter template defines skeleton services on top of AWS infrastructure
