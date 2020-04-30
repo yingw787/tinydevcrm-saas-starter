@@ -11,6 +11,7 @@ services:
         expose:
             - 8000
         env_file:
+            # Copy ./app/conf/.env.prod-sample to ./app/conf/.env.prod
             - ./app/conf/.env.prod
         depends_on:
             - db
@@ -21,6 +22,7 @@ services:
         volumes:
             - postgres_data:/var/lib/postgresql/data
         env_file:
+            # Copy ./db/conf/.env.prod-sample to ./db/conf/.env.prod
             - ./db/conf/.env.prod
     nginx:
         build:

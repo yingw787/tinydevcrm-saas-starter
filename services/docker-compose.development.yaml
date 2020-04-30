@@ -11,6 +11,7 @@ services:
         ports:
             - 8000:8000
         env_file:
+            # Copy ./app/conf/.env.dev-example to ./app/conf/.env.dev
             - ./app/conf/.env.dev
         depends_on:
             - db
@@ -21,6 +22,7 @@ services:
         volumes:
             - postgres_data:/var/lib/postgresql/data/
         env_file:
+            # Copy ./db/conf/.env.dev-example to ./db/conf/.env.dev
             - ./db/conf/.env.dev
 
 volumes:
