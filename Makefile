@@ -26,3 +26,12 @@ clean-prod:
 
 aws-login:
 	$$(aws ecr get-login --no-include-email)
+
+aws-create-ecr:
+	aws cloudformation create-stack --stack-name tinydevcrm-ecr --template-body file://aws-ecr.yaml --capabilities CAPABILITY_NAMED_IAM
+
+aws-deploy-ecr:
+	aws cloudformation deploy --stack-name tinydevcrm-ecr --template-file aws-ecr.yaml --capabilities CAPABILITY_NAMED_IAM
+
+aws-delete-ecr:
+	aws cloudformation delete-stack --stack-name tinydevcrm-ecr
