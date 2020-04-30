@@ -13,6 +13,10 @@
 This starter template defines skeleton services on top of AWS infrastructure
 learnings such as `tinydevcrm-infra`.
 
+## System environment assumptions
+
+
+
 ## Notable dependencies
 
 - `Django`
