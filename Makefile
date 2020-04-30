@@ -10,7 +10,7 @@ run-dev:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.development.yaml --verbose up -d --build
 
 run-prod:
-	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.development.yaml --verbose up -d --build
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.production.yaml --verbose up -d --build
 
 clean-dev:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.development.yaml down -v
