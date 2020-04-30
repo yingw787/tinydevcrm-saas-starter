@@ -3,3 +3,6 @@ services/app/conf/.env.dev
 services/db/conf/.env.dev
 services/app/conf/.env.prod
 services/db/conf/.env.prod
+
+# Static files.
+services/app/src/staticfiles

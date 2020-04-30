@@ -3,8 +3,7 @@
 # pull official base image
 FROM python:3.8.0-alpine
 
-# Set work directory. This should match the setting for the Docker volume
-# defined in 'docker-compose.development.yaml'.
+# set work directory
 ARG BASEDIR='/usr/src/app'
 
 WORKDIR ${BASEDIR}

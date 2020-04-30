@@ -11,7 +11,7 @@ then
     echo "PostgreSQL started"
 fi
 
-export BASEDIR='/usr/src/app'
+export BASEDIR='/home/app/web'
 
 python ${BASEDIR}/manage.py flush --no-input
 python ${BASEDIR}/manage.py migrate
