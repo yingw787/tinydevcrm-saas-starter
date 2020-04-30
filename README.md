@@ -66,3 +66,10 @@ Some features include:
     This is free software: you are free to change and redistribute it.
     There is NO WARRANTY, to the extent permitted by law.
     ```
+
+-   `awscli`, CLI for calling AWS endpoints.
+
+    ```bash
+    $ aws --version
+    aws-cli/1.18.35 Python/3.7.7 Linux/5.4.0-28-generic botocore/1.15.35
+    ```
