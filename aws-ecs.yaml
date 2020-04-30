@@ -1,0 +1,9 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: AWS Elastic Container Service (ECS) task and service definitions for TinyDevCRM
+
+Resources:
+  ApplicationCluster:
+    Type: "AWS::ECS::Cluster"
+    Properties:
+      ClusterName: !Sub "${AWS::StackName}-ecs-cluster"

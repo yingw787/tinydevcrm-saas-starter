@@ -35,3 +35,12 @@ aws-deploy-ecr:
 
 aws-delete-ecr:
 	aws cloudformation delete-stack --stack-name tinydevcrm-ecr
+
+aws-create-ecs:
+	aws cloudformation create-stack --stack-name tinydevcrm-ecs --template-body file://aws-ecs.yaml --capabilities CAPABILITY_NAMED_IAM
+
+aws-deploy-ecs:
+	aws cloudformation deploy --stack-name tinydevcrm-ecs --template-file aws-ecs.yaml --capabilities CAPABILITY_NAMED_IAM
+
+aws-delete-ecs:
+	aws cloudformation delete-stack --stack-name tinydevcrm-ecs
