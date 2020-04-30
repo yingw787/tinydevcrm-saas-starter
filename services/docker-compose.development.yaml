@@ -1,0 +1,29 @@
+version: '3.7'
+
+services:
+    web:
+        build:
+            context: ./app
+            dockerfile: development.Dockerfile
+        command: python manage.py runserver 0.0.0.0:8000
+        volumes:
+            - ./app/tinydevcrm/:/usr/src/app/
+        ports:
+            - 8000:8000
+        env_file:
+            - ./app/conf/.env.dev
+        depends_on:
+            - db
+    db:
+        build:
+            context: ./db
+            dockerfile: Dockerfile
+        volumes:
+            - postgres_data:/var/lib/postgresql/data/
+        env_file:
+            - ./db/conf/.env.dev
+
+volumes:
+    # Persisting the data within the PostgreSQL instance to a Docker volume,
+    # that binds to '/var/lib/postgresql/data/' directory in the container.
+    postgres_data:
