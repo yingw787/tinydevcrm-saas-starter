@@ -1,14 +1,35 @@
 version: "2.4"
 
 services:
-  app-test:
+  # Test stage of application.
+  test:
     build:
       context: ./app
       dockerfile: aws.Dockerfile
       target: test
-  app-release:
+  # Release stage of application Dockerfile.
+  release:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:latest
+    build:
+      context: ./app
+      dockerfile: aws.Dockerfile
+    env_file:
+      # Change ./app/conf/.env.aws-sample to ./app/conf/.env.aws
+      ./app/conf/.env.aws
+  app:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:${APP_VERSION}
-  db-release:
+    extends:
+      service: release
+  db:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_DB_REPOSITORY_NAME}:${APP_VERSION}
-  nginx-release:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    env_file:
+      # Change ./db/conf/.env.aws-sample to ./db/conf/.env.aws
+      ./db/conf/.env.aws
+  nginx:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_NGINX_REPOSITORY_NAME}:${APP_VERSION}
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
