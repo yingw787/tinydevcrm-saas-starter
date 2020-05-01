@@ -24,10 +24,9 @@ config-aws:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml config
 
 run-aws-release:
-	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up --abort-on-container-exit migrate
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up --build --abort-on-container-exit migrate
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose run app python3 manage.py collectstatic --no-input
-	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up --abort-on-container-exit acceptance
-	@ echo App running at http://$$(docker-compose port app 8000 | sed s/0.0.0.0/localhost/g)
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up -d --build
 
 publish-aws:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose push release app db nginx
