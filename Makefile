@@ -38,13 +38,26 @@ clean-prod:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.production.yaml down -v
 	docker images -q -f dangling=true -f label=application=todobackend | xargs -I ARGS docker rmi -f --no-prune ARGS
 
-run-aws-config:
+config-aws:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml config
 
 run-aws-test:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose build --pull release
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose build
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose run test
+
+run-aws-release:
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up --abort-on-container-exit migrate
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose run app python3 manage.py collectstatic --no-input
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up --abort-on-container-exit acceptance
+	@ echo App running at http://$$(docker-compose port app 8000 | sed s/0.0.0.0/localhost/g)
+
+publish-aws:
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose push release app db nginx
+
+clean-aws:
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml down -v
+	docker images -q -f dangling=true -f label=application=todobackend | xargs -I ARGS docker rmi -f --no-prune ARGS
 
 # AWS-specific commands #
 
