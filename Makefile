@@ -1,10 +1,6 @@
 .PHONY: version run-dev run-prod clean-dev clean-prod aws-login
 
-export APP_VERSION ?= $(shell git rev-parse --short HEAD)
 export GIT_REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
-
-version:
-	@ echo '{"Version": "$(APP_VERSION)"}'
 
 run-dev:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.development.yaml --verbose up -d --build

@@ -3,6 +3,9 @@
 # In order to run this non-default Makefile, use `make -f aws.Makefile` and then
 # apply targets.
 
+export APP_VERSION ?= $(shell git rev-parse --short HEAD)
+export GIT_REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
+
 # In order to run these commands, make sure that `tinydevcrm-infra` is set up
 # and `awscli` is installed, and `aws configure` is properly run according to
 # `SETUP.md`.
@@ -14,6 +17,9 @@ export AWS_REGION ?= $(shell aws configure get region)
 export AWS_ECR_APP_REPOSITORY_NAME=tinydevcrm-ecr/app
 export AWS_ECR_DB_REPOSITORY_NAME=tinydevcrm-ecr/db
 export AWS_ECR_NGINX_REPOSITORY_NAME=tinydevcrm-ecr/nginx
+
+version:
+	@ echo '{"Version": "$(APP_VERSION)"}'
 
 # Local compute commands #
 
