@@ -20,6 +20,18 @@ services:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:${APP_VERSION}
     extends:
       service: release
+    depends_on: db
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+  migrate:
+    extends:
+      service: release
+    depends_on: db
+    command:
+      - python3
+      - manage.py
+      - migrate
+      - --no-input
   db:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_DB_REPOSITORY_NAME}:${APP_VERSION}
     build:
@@ -28,8 +40,18 @@ services:
     env_file:
       # Change ./db/conf/.env.aws-sample to ./db/conf/.env.aws
       ./db/conf/.env.aws
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
   nginx:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_NGINX_REPOSITORY_NAME}:${APP_VERSION}
     build:
       context: ./nginx
       dockerfile: Dockerfile
+    depends_on:
+      - app
+    ports:
+      - 1337:80
+
+volumes:
+  postgres_data:
+  static_volume:
