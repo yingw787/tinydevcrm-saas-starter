@@ -1,3 +1,8 @@
+#!/usr/bin/env make
+#
+# In order to run this non-default Makefile, use `make -f local.Makefile` and
+# then apply targets.
+
 .PHONY: version run-dev run-prod clean-dev clean-prod aws-login
 
 export GIT_REPO_ROOT ?= $(shell git rev-parse --show-toplevel)

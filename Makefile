@@ -1,7 +1,4 @@
 #!/usr/bin/env make
-#
-# In order to run this non-default Makefile, use `make -f aws.Makefile` and then
-# apply targets.
 
 export APP_VERSION ?= $(shell git rev-parse --short HEAD)
 export GIT_REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
