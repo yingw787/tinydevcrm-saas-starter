@@ -2,6 +2,17 @@ AWSTemplateFormatVersion: "2010-09-09"
 
 Description: AWS Elastic Container Service (ECS) task and service definitions for TinyDevCRM
 
+Parameters:
+  ApplicationDockerImageTag:
+    Type: String
+    Default: latest
+    Description: Image tag for the Django application backend Docker build.
+
+  ApplicationECRRepositoryName:
+    Type: String
+    Default: tinydevcrm-ecr/app
+    Description: Elastic Container Registry repository name where Docker builds for the Django application backend go.
+
 Resources:
   ApplicationCluster:
     Type: "AWS::ECS::Cluster"
