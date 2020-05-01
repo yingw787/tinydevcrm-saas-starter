@@ -1,6 +1,6 @@
 # `tinydevcrm-saas-starter`: Starter backend for TinyDevCRM (and other possible SaaS-based products)
 
-## Get started
+## Getting started
 
 1.  Clone this repository:
 
@@ -12,7 +12,7 @@
 2.  Run:
 
     ```bash
-    make run-dev
+    make -f local.Makefile run-dev
     ```
 
 ## Overview
@@ -73,3 +73,10 @@ Some features include:
     $ aws --version
     aws-cli/1.18.35 Python/3.7.7 Linux/5.4.0-28-generic botocore/1.15.35
     ```
+
+## Deploying to AWS
+
+1.  First, make sure that `tinydevcrm-infra` is configured properly in AWS
+    CloudFormation, and that all resources are deployed.
+
+TODO
