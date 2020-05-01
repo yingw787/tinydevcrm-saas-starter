@@ -3,8 +3,28 @@
 export APP_VERSION ?= $(shell git rev-parse --short HEAD)
 export GIT_REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
+# In order to run these commands, make sure that `tinydevcrm-infra` is set up
+# and `awscli` is installed, and `aws configure` is properly run according to
+# `SETUP.md`.
+export AWS_ACCOUNT_ID ?= $(shell aws sts get-caller-identity --query Account --output text)
+export AWS_REGION ?= $(shell aws configure get region)
+
+# Change to your AWS ECR app repository name, after configuring in
+# `aws-ecr.yaml` in this repository.
+AWS_ECR_APP_REPOSITORY_NAME=tinydevcrm-ecr/app
+AWS_ECR_DB_REPOSITORY_NAME=tinydevcrm-ecr/db
+AWS_ECR_NGINX_REPOSITORY_NAME=tinydevcrm-ecr/nginx
+
 version:
 	@ echo '{"Version": "$(APP_VERSION)"}'
+
+# Local compute commands #
+
+testy:
+	# Do not echo command
+	@echo ${AWS_ACCOUNT_ID}
+	@echo ${AWS_REGION}
+	echo ${AWS_ECR_APP_REPOSITORY_NAME}
 
 run-dev:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.development.yaml --verbose up -d --build
@@ -23,6 +43,11 @@ clean-dev:
 clean-prod:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.production.yaml down -v
 	docker images -q -f dangling=true -f label=application=todobackend | xargs -I ARGS docker rmi -f --no-prune ARGS
+
+run-aws-test:
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose
+
+# AWS-specific commands #
 
 aws-login:
 	$$(aws ecr get-login --no-include-email)
