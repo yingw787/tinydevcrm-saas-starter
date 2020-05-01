@@ -1,13 +1,11 @@
 version: "2.4"
 
 services:
-  # Test stage of application.
   test:
     build:
       context: ./app
       dockerfile: aws.Dockerfile
       target: test
-  # Release stage of application Dockerfile.
   release:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:latest
     build:
@@ -20,13 +18,22 @@ services:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:${APP_VERSION}
     extends:
       service: release
-    depends_on: db
+    depends_on:
+      - db
     volumes:
       - static_volume:/home/app/web/staticfiles
+    command:
+      - gunicorn
+      - wsgi:application
+      - --bind
+      - 0.0.0.0:8000
+    expose:
+      - 8000
   migrate:
     extends:
       service: release
-    depends_on: db
+    depends_on:
+      - db
     command:
       - python3
       - manage.py
