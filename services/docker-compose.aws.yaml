@@ -1,11 +1,6 @@
 version: "2.4"
 
 services:
-  test:
-    build:
-      context: ./app
-      dockerfile: aws.Dockerfile
-      target: test
   release:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:latest
     build:
@@ -53,7 +48,9 @@ services:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_NGINX_REPOSITORY_NAME}:${APP_VERSION}
     build:
       context: ./nginx
-      dockerfile: Dockerfile
+      dockerfile: aws.Dockerfile
+    volumes:
+      - static_volume:/home/app/web/staticfiles
     depends_on:
       - app
     ports:
