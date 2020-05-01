@@ -11,20 +11,14 @@ export AWS_REGION ?= $(shell aws configure get region)
 
 # Change to your AWS ECR app repository name, after configuring in
 # `aws-ecr.yaml` in this repository.
-AWS_ECR_APP_REPOSITORY_NAME=tinydevcrm-ecr/app
-AWS_ECR_DB_REPOSITORY_NAME=tinydevcrm-ecr/db
-AWS_ECR_NGINX_REPOSITORY_NAME=tinydevcrm-ecr/nginx
+export AWS_ECR_APP_REPOSITORY_NAME=tinydevcrm-ecr/app
+export AWS_ECR_DB_REPOSITORY_NAME=tinydevcrm-ecr/db
+export AWS_ECR_NGINX_REPOSITORY_NAME=tinydevcrm-ecr/nginx
 
 version:
 	@ echo '{"Version": "$(APP_VERSION)"}'
 
 # Local compute commands #
-
-testy:
-	# Do not echo command
-	@echo ${AWS_ACCOUNT_ID}
-	@echo ${AWS_REGION}
-	echo ${AWS_ECR_APP_REPOSITORY_NAME}
 
 run-dev:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.development.yaml --verbose up -d --build
@@ -44,8 +38,13 @@ clean-prod:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.production.yaml down -v
 	docker images -q -f dangling=true -f label=application=todobackend | xargs -I ARGS docker rmi -f --no-prune ARGS
 
+run-aws-config:
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml config
+
 run-aws-test:
-	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose build --pull release
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose build
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose run test
 
 # AWS-specific commands #
 
