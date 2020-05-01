@@ -6,3 +6,9 @@ services:
       context: ./app
       dockerfile: aws.Dockerfile
       target: test
+  app-release:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:${APP_VERSION}
+  db-release:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_DB_REPOSITORY_NAME}:${APP_VERSION}
+  nginx-release:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_NGINX_REPOSITORY_NAME}:${APP_VERSION}
