@@ -42,9 +42,71 @@ Resources:
   NginxRepository:
     Type: "AWS::ECR::Repository"
     Properties:
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+              "rules": [
+                {
+                  "rulePriority": 10,
+                  "description": "Untagged images",
+                  "selection": {
+                    "tagStatus": "untagged",
+                    "countType": "sinceImagePushed",
+                    "countUnit": "days",
+                    "countNumber": 7
+                  },
+                  "action": {
+                    "type": "expire"
+                  }
+                }
+              ]
+            }
       RepositoryName: tinydevcrm-ecr/nginx
+      RepositoryPolicyText:
+        Statement:
+          - Sid: RemoteAccountAccess
+            Effect: Allow
+            Principal:
+              AWS: "arn:aws:iam::158949774536:root"
+              Service: codebuild.amazonaws.com
+            Action:
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:BatchGetImage"
+              - "ecr:BatchCheckLayerAvailability"
+        Version: "2008-10-17"
 
   PostgreSQLDatabaseRepository:
     Type: "AWS::ECR::Repository"
     Properties:
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+              "rules": [
+                {
+                  "rulePriority": 10,
+                  "description": "Untagged images",
+                  "selection": {
+                    "tagStatus": "untagged",
+                    "countType": "sinceImagePushed",
+                    "countUnit": "days",
+                    "countNumber": 7
+                  },
+                  "action": {
+                    "type": "expire"
+                  }
+                }
+              ]
+            }
       RepositoryName: tinydevcrm-ecr/db
+      RepositoryPolicyText:
+        Statement:
+          - Sid: RemoteAccountAccess
+            Effect: Allow
+            Principal:
+              AWS: "arn:aws:iam::158949774536:root"
+              Service: codebuild.amazonaws.com
+            Action:
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:BatchGetImage"
+              - "ecr:BatchCheckLayerAvailability"
+        Version: "2008-10-17"
