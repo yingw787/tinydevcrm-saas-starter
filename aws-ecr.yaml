@@ -6,19 +6,6 @@ Resources:
   DjangoBackendRepository:
     Type: "AWS::ECR::Repository"
     Properties:
-      RepositoryName: tinydevcrm-ecr/app
-      RepositoryPolicyText:
-        Statement:
-          - Sid: RemoteAccountAccess
-            Effect: Allow
-            Principal:
-              AWS: "arn:aws:iam::158949774536:root"
-              Service: codebuild.amazonaws.com
-            Action:
-              - "ecr:GetDownloadUrlForLayer"
-              - "ecr:BatchGetImage"
-              - "ecr:BatchCheckLayerAvailability"
-        Version: "2008-10-17"
       LifecyclePolicy:
         LifecyclePolicyText: |
           {
@@ -38,6 +25,19 @@ Resources:
                 }
               ]
             }
+      RepositoryName: tinydevcrm-ecr/app
+      RepositoryPolicyText:
+        Statement:
+          - Sid: RemoteAccountAccess
+            Effect: Allow
+            Principal:
+              AWS: "arn:aws:iam::158949774536:root"
+              Service: codebuild.amazonaws.com
+            Action:
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:BatchGetImage"
+              - "ecr:BatchCheckLayerAvailability"
+        Version: "2008-10-17"
 
   NginxRepository:
     Type: "AWS::ECR::Repository"
