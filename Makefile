@@ -31,6 +31,11 @@ run-aws-release:
 create-superuser:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml exec app python3 manage.py createsuperuser
 
+# Change PGPASSWORD, --username, and --db values to match those in
+# db/conf/.env.aws
+exec-psql:
+	PGPASSWORD=tinydevcrm docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml exec db psql --username=tinydevcrm --db=tinydevcrm_api_prod
+
 publish-app: aws-login
 	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:${APP_VERSION} -f ${GIT_REPO_ROOT}/services/app/aws.Dockerfile ${GIT_REPO_ROOT}/services/app
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:${APP_VERSION}
