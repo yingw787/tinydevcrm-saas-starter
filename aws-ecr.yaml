@@ -12,13 +12,32 @@ Resources:
           - Sid: RemoteAccountAccess
             Effect: Allow
             Principal:
-              AWS: "arn:aws:iam:158949774536:root"
+              AWS: "arn:aws:iam::158949774536:root"
               Service: codebuild.amazonaws.com
             Action:
               - "ecr:GetDownloadUrlForLayer"
               - "ecr:BatchGetImage"
               - "ecr:BatchCheckLayerAvailability"
         Version: "2008-10-17"
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+              "rules": [
+                {
+                  "rulePriority": 10,
+                  "description": "Untagged images",
+                  "selection": {
+                    "tagStatus": "untagged",
+                    "countType": "sinceImagePushed",
+                    "countUnit": "days",
+                    "countNumber": 7
+                  },
+                  "action": {
+                    "type": "expire"
+                  }
+                }
+              ]
+            }
 
   NginxRepository:
     Type: "AWS::ECR::Repository"
