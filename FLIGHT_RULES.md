@@ -44,3 +44,47 @@ https://docs.docker.com/engine/reference/commandline/login/#credentials-store
 
 Login Succeeded
 ```
+
+### `make publish-app` fails with authentication error
+
+#### Problem
+
+When running `make publish-app` or otherwise pushing Docker images to AWS ECR,
+sometimes the process errors out:
+
+This is different from having `awscli` properly configured and having an MFA
+token for the AWS IAM user.
+
+```bash
+ERROR: compose.cli.main.main: denied: Your authorization token has expired. Reauthenticate and try again.
+```
+
+#### Resolution
+
+AWS ECR requires its own login.
+
+Re-run `make aws-login` and then re-try the push:
+
+```bash
+make aws-login
+make publish-app
+```
+
+This should be templated out in the `Makefile` using dependent targets.
+
+### `make publish-app` fails with tag not found error
+
+#### Problem
+
+Publishing `app`, `db`, and `nginx` Docker images requires the latest commit
+tag. If those tagged images don't exist on the local compute instance, then
+`docker push` will error out:
+
+```bash
+ERROR: compose.cli.main.main: tag does not exist: 267131297086.dkr.ecr.us-east-1.amazonaws.com/tinydevcrm-ecr/app:aafc2c5
+```
+
+#### Resolution
+
+Ensure that the `docker build` process is run before every push. This should be
+templated out in the `Makefile`.
