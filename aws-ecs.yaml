@@ -6,7 +6,12 @@ Parameters:
   ApplicationDockerImageTag:
     Type: String
     Default: latest
-    Description: Image tag for the Django application backend Docker build.
+    Description: Image tag for the Django application backend Docker image.
+
+  DatabaseDockerImageTag:
+    Type: String
+    Default: latest
+    Description: Image tag for the PostgreSQL database Docker image.
 
   ApplicationECRRepositoryName:
     Type: String
@@ -19,3 +24,19 @@ Parameters:
     Description: CloudFormation output reference from stack `aws-ec2-compute.yaml` for the ECS cluster.
 
 Resources:
+  ApplicationTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: tinydevcrm-app
+      Volumes:
+        - Name: static_volume
+          Host:
+            SourcePath: /home/app/web/staticfiles
+      ContainerDefinitions:
+        - Name: tinydevcrm-app
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/tinydevcrm-ecr/app:${ApplicationDockerImageTag}
+          MemoryReservation: 395
+          Cpu: 245
+          MountPoints:
+            - SourceVolume: static_volume
+              ContainerPath: /home/app/web/staticfiles
