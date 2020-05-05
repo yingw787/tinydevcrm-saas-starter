@@ -50,6 +50,12 @@ Resources:
     Properties:
       ClusterName: !Sub ${ECSClusterName}
 
+  ApplicationLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    Properties:
+      LogGroupName: !Sub "/${AWS::StackName}/ecs/tinydevcrm"
+      RetentionInDays: 7
+
   ApplicationService:
     Type: "AWS::ECS::Service"
     Properties:
@@ -76,17 +82,33 @@ Resources:
             - "wsgi:application"
             - "--bind"
             - "0.0.0.0:8000"
+          Cpu: 245
+          Environment:
+            - Name: DEBUG
+              Value: 1
+            - Name: SECRET_KEY
+              Value: change_me
+            - Name: DJANGO_ALLOWED_HOSTS
+              Value: "localhost 127.0.0.1 [::1]"
+            - Name: SQL_ENGINE
+              Value: django.db.backends.sqlite3
+            - Name: SQL_DATABASE
+              Value: db.sqlite3
+            - Name: SQL_USER
+              Value: user
+            - Name: SQL_PASSWORD
+              Value: password
+            - Name: SQL_HOST
+              Value: localhost
+            - Name: SQL_PORT
+              Value: 5432
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/tinydevcrm-ecr/app:${ApplicationDockerImageTag}"
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub /${AWS::StackName}/ecs/tinydevcrm
-              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Sub "/${AWS::StackName}/ecs/tinydevcrm"
+              awslogs-region: !Ref "AWS::Region"
               awslogs-stream-prefix: docker
-          Cpu: 245
-          Environment:
-            - Name: DJANGO_SETTINGS_MODULE
-              Value: app.src.core.settings
-          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/tinydevcrm-ecr/app:${ApplicationDockerImageTag}"
           MemoryReservation: 395
           MountPoints:
             - ContainerPath: /home/app/web/staticfiles
@@ -99,18 +121,34 @@ Resources:
             - manage.py
             - collectstatic
             - "--no-input"
+          Cpu: 5
+          Environment:
+            - Name: DEBUG
+              Value: 1
+            - Name: SECRET_KEY
+              Value: change_me
+            - Name: DJANGO_ALLOWED_HOSTS
+              Value: "localhost 127.0.0.1 [::1]"
+            - Name: SQL_ENGINE
+              Value: django.db.backends.sqlite3
+            - Name: SQL_DATABASE
+              Value: db.sqlite3
+            - Name: SQL_USER
+              Value: user
+            - Name: SQL_PASSWORD
+              Value: password
+            - Name: SQL_HOST
+              Value: localhost
+            - Name: SQL_PORT
+              Value: 5432
+          Essential: false
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/tinydevcrm-ecr/app:${ApplicationDockerImageTag}"
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub /${AWS::StackName}/ecs/tinydevcrm
-              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Sub "/${AWS::StackName}/ecs/tinydevcrm"
+              awslogs-region: !Ref "AWS::Region"
               awslogs-stream-prefix: docker
-          Cpu: 5
-          Environment:
-            - Name: DJANGO_SETTINGS_MODULE
-              Value: app.src.core.settings
-          Essential: false
-          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/tinydevcrm-ecr/app:${ApplicationDockerImageTag}"
           MemoryReservation: 5
           MountPoints:
             - ContainerPath: /home/app/web/staticfiles
@@ -120,9 +158,3 @@ Resources:
         - Name: static_volume
           Host:
             SourcePath: /home/app/web/staticfiles
-
-  ApplicationLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /${AWS::StackName}/ecs/tinydevcrm
-      RetentionInDays: 7
