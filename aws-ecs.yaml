@@ -50,3 +50,19 @@ Resources:
             - 0.0.0.0:8000
           PortMappings:
             - ContainerPort: 8000
+        - Name: collectstatic
+          Essential: false
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/tinydevcrm-ecr/app:${ApplicationDockerImageTag}
+          MemoryReservation: 5
+          Cpu: 5
+          MountPoints:
+            - SourceVolume: static_volume
+              ContainerPath: /home/app/web/staticfiles
+          Environment:
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: app.src.core.settings
+          Command:
+            - python3
+            - manage.py
+            - collectstatic
+            - --no-input
