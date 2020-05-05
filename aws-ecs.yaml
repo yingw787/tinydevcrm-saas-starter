@@ -18,12 +18,45 @@ Parameters:
     Default: latest
     Description: Image tag for the PostgreSQL database Docker image.
 
-  ECSClusterReference:
+  ECSClusterName:
     Type: String
-    Default: tinydevcrm-ec2-compute-ecs-cluster
-    Description: "CloudFormation output reference from stack `aws-ec2-compute.yaml` for the ECS cluster."
+    Default: tinydevcrm-ecs-cluster
+    Description: "ECS cluster name matching the one defined in 'aws-ec2-compute.yaml'."
+
+  PublicLoadBalancerReference:
+    Type: String
+    Default: tinydevcrm-ec2-compute-public-elb
+    Description: "CloudFormation ARN output reference from stack `aws-ec2-compute.yaml` for the public load balancer."
+
+  VPCReference:
+    Type: String
+    Default: tinydevcrm-ec2-networking-vpc
+    Description: "Reference to VPC deployed as part of stack `tinydevcrm-ec2-networking.yaml`."
 
 Resources:
+  ApplicationCluster:
+    Type: "AWS::ECS::Cluster"
+    Description: ECS cluster for deploying ECS task and service definitions.
+    Properties:
+      ClusterName: !Sub ${ECSClusterName}
+
+  ApplicationService:
+    Type: "AWS::ECS::Service"
+    DependsOn:
+      - ApplicationLoadBalancerHttpListener
+    Properties:
+      Cluster: !Ref ApplicationCluster
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      DesiredCount: 1
+      LoadBalancers:
+        - ContainerName: tinydevcrm-app
+          ContainerPort: 8000
+          TargetGroupArn: !Ref ApplicationServiceTargetGroup
+      Role: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS"
+      TaskDefinition: !Ref ApplicationTaskDefinition
+
   ApplicationTaskDefinition:
     Type: "AWS::ECS::TaskDefinition"
     Properties:
