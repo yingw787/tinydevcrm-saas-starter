@@ -13,8 +13,9 @@ Parameters:
     Default: tinydevcrm-ecr/app
     Description: Elastic Container Registry repository name where Docker builds for the Django application backend go.
 
+  ECSClusterReference:
+    Type: String
+    Default: tinydevcrm-ec2-compute-ecs-cluster
+    Description: CloudFormation output reference from stack `aws-ec2-compute.yaml` for the ECS cluster.
+
 Resources:
-  ApplicationCluster:
-    Type: "AWS::ECS::Cluster"
-    Properties:
-      ClusterName: !Sub "${AWS::StackName}-ecs-cluster"
