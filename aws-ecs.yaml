@@ -76,6 +76,12 @@ Resources:
             - "wsgi:application"
             - "--bind"
             - "0.0.0.0:8000"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub /${AWS::StackName}/ecs/tinydevcrm
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: docker
           Cpu: 245
           Environment:
             - Name: DJANGO_SETTINGS_MODULE
@@ -93,6 +99,12 @@ Resources:
             - manage.py
             - collectstatic
             - "--no-input"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub /${AWS::StackName}/ecs/tinydevcrm
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: docker
           Cpu: 5
           Environment:
             - Name: DJANGO_SETTINGS_MODULE
@@ -108,3 +120,9 @@ Resources:
         - Name: static_volume
           Host:
             SourcePath: /home/app/web/staticfiles
+
+  ApplicationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /${AWS::StackName}/ecs/tinydevcrm
+      RetentionInDays: 7
