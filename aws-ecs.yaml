@@ -23,10 +23,20 @@ Parameters:
     Default: tinydevcrm-ecs-cluster
     Description: "ECS cluster name matching the one defined in 'aws-ec2-compute.yaml'."
 
+  PublicLoadBalancerListenerReference:
+    Type: String
+    Default: tinydevcrm-ec2-compute-public-elb-listener
+    Description: "CloudFormation output reference from stack 'aws-ec2-compute.yaml' for the public load balancer listener."
+
   PublicLoadBalancerReference:
     Type: String
     Default: tinydevcrm-ec2-compute-public-elb
     Description: "CloudFormation ARN output reference from stack `aws-ec2-compute.yaml` for the public load balancer."
+
+  PublicLoadBalancerTargetGroupReference:
+    Type: String
+    Default: tinydevcrm-ec2-compute-public-elb-target-group
+    Description: "CloudFormation output reference from stack 'aws-ec2-compute.yaml' for the public load balancer target group."
 
   VPCReference:
     Type: String
@@ -42,8 +52,6 @@ Resources:
 
   ApplicationService:
     Type: "AWS::ECS::Service"
-    DependsOn:
-      - ApplicationLoadBalancerHttpListener
     Properties:
       Cluster: !Ref ApplicationCluster
       DeploymentConfiguration:
@@ -53,7 +61,8 @@ Resources:
       LoadBalancers:
         - ContainerName: tinydevcrm-app
           ContainerPort: 8000
-          TargetGroupArn: !Ref ApplicationServiceTargetGroup
+          TargetGroupArn: !ImportValue
+            Ref: PublicLoadBalancerTargetGroupReference
       Role: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS"
       TaskDefinition: !Ref ApplicationTaskDefinition
 
