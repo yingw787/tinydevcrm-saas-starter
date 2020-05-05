@@ -40,3 +40,13 @@ Resources:
           MountPoints:
             - SourceVolume: static_volume
               ContainerPath: /home/app/web/staticfiles
+          Environment:
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: app.src.core.settings
+          Command:
+            - gunicorn
+            - wsgi:application
+            - --bind
+            - 0.0.0.0:8000
+          PortMappings:
+            - ContainerPort: 8000
