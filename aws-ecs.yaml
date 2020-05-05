@@ -89,7 +89,7 @@ Resources:
             - Name: SECRET_KEY
               Value: change_me
             - Name: DJANGO_ALLOWED_HOSTS
-              Value: "localhost 127.0.0.1 [::1]"
+              Value: "*"
             - Name: SQL_ENGINE
               Value: django.db.backends.sqlite3
             - Name: SQL_DATABASE
@@ -128,7 +128,7 @@ Resources:
             - Name: SECRET_KEY
               Value: change_me
             - Name: DJANGO_ALLOWED_HOSTS
-              Value: "localhost 127.0.0.1 [::1]"
+              Value: "*"
             - Name: SQL_ENGINE
               Value: django.db.backends.sqlite3
             - Name: SQL_DATABASE
