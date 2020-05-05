@@ -8,61 +8,61 @@ Parameters:
     Default: latest
     Description: Image tag for the Django application backend Docker image.
 
-  DatabaseDockerImageTag:
-    Type: String
-    Default: latest
-    Description: Image tag for the PostgreSQL database Docker image.
-
   ApplicationECRRepositoryName:
     Type: String
     Default: tinydevcrm-ecr/app
     Description: Elastic Container Registry repository name where Docker builds for the Django application backend go.
 
+  DatabaseDockerImageTag:
+    Type: String
+    Default: latest
+    Description: Image tag for the PostgreSQL database Docker image.
+
   ECSClusterReference:
     Type: String
     Default: tinydevcrm-ec2-compute-ecs-cluster
-    Description: CloudFormation output reference from stack `aws-ec2-compute.yaml` for the ECS cluster.
+    Description: "CloudFormation output reference from stack `aws-ec2-compute.yaml` for the ECS cluster."
 
 Resources:
   ApplicationTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
+    Type: "AWS::ECS::TaskDefinition"
     Properties:
+      ContainerDefinitions:
+        - Name: tinydevcrm-app
+          Command:
+            - gunicorn
+            - "wsgi:application"
+            - "--bind"
+            - "0.0.0.0:8000"
+          Cpu: 245
+          Environment:
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: app.src.core.settings
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/tinydevcrm-ecr/app:${ApplicationDockerImageTag}"
+          MemoryReservation: 395
+          MountPoints:
+            - ContainerPath: /home/app/web/staticfiles
+              SourceVolume: static_volume
+          PortMappings:
+            - ContainerPort: 8000
+        - Name: collectstatic
+          Command:
+            - python3
+            - manage.py
+            - collectstatic
+            - "--no-input"
+          Cpu: 5
+          Environment:
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: app.src.core.settings
+          Essential: false
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/tinydevcrm-ecr/app:${ApplicationDockerImageTag}"
+          MemoryReservation: 5
+          MountPoints:
+            - ContainerPath: /home/app/web/staticfiles
+              SourceVolume: static_volume
       Family: tinydevcrm-app
       Volumes:
         - Name: static_volume
           Host:
             SourcePath: /home/app/web/staticfiles
-      ContainerDefinitions:
-        - Name: tinydevcrm-app
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/tinydevcrm-ecr/app:${ApplicationDockerImageTag}
-          MemoryReservation: 395
-          Cpu: 245
-          MountPoints:
-            - SourceVolume: static_volume
-              ContainerPath: /home/app/web/staticfiles
-          Environment:
-            - Name: DJANGO_SETTINGS_MODULE
-              Value: app.src.core.settings
-          Command:
-            - gunicorn
-            - wsgi:application
-            - --bind
-            - 0.0.0.0:8000
-          PortMappings:
-            - ContainerPort: 8000
-        - Name: collectstatic
-          Essential: false
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/tinydevcrm-ecr/app:${ApplicationDockerImageTag}
-          MemoryReservation: 5
-          Cpu: 5
-          MountPoints:
-            - SourceVolume: static_volume
-              ContainerPath: /home/app/web/staticfiles
-          Environment:
-            - Name: DJANGO_SETTINGS_MODULE
-              Value: app.src.core.settings
-          Command:
-            - python3
-            - manage.py
-            - collectstatic
-            - --no-input
