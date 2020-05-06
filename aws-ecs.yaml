@@ -115,6 +115,7 @@ Resources:
               SourceVolume: static_volume
           PortMappings:
             - ContainerPort: 8000
+              HostPort: 0
         - Name: collectstatic
           Command:
             - python3
