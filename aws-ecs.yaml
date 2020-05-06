@@ -173,44 +173,6 @@ Resources:
               SourceVolume: static_volume
           PortMappings:
             - ContainerPort: 8000
-        - Name: collectstatic
-          Command:
-            - python3
-            - manage.py
-            - collectstatic
-            - "--no-input"
-          Cpu: 5
-          Environment:
-            - Name: DEBUG
-              Value: 1
-            - Name: SECRET_KEY
-              Value: change_me
-            - Name: DJANGO_ALLOWED_HOSTS
-              Value: "*"
-            - Name: SQL_ENGINE
-              Value: django.db.backends.sqlite3
-            - Name: SQL_DATABASE
-              Value: db.sqlite3
-            - Name: SQL_USER
-              Value: user
-            - Name: SQL_PASSWORD
-              Value: password
-            - Name: SQL_HOST
-              Value: localhost
-            - Name: SQL_PORT
-              Value: 5432
-          Essential: false
-          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/tinydevcrm-ecr/app:${ApplicationDockerImageTag}"
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Sub "/${AWS::StackName}/ecs/tinydevcrm"
-              awslogs-region: !Ref "AWS::Region"
-              awslogs-stream-prefix: docker
-          MemoryReservation: 5
-          MountPoints:
-            - ContainerPath: /home/app/web/staticfiles
-              SourceVolume: static_volume
       Family: tinydevcrm-app
       NetworkMode: awsvpc
       Volumes:
