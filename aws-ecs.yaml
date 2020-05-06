@@ -74,6 +74,8 @@ Parameters:
 Resources:
   ApplicationCluster:
     Type: "AWS::ECS::Cluster"
+    DependsOn:
+      - EC2AutoScalingGroup
     Description: ECS cluster for deploying ECS task and service definitions.
     Properties:
       ClusterName: !Sub ${ECSClusterName}
@@ -99,14 +101,13 @@ Resources:
           SecurityGroups:
             - !Ref ApplicationSecurityGroup
           Subnets:
-            - !Ref PublicSubnetAReference
-            - !Ref PublicSubnetBReference
+            - "Fn::ImportValue": !Ref PublicSubnetAReference
+            - "Fn::ImportValue": !Ref PublicSubnetBReference
       DesiredCount: 1
       LoadBalancers:
         - ContainerName: tinydevcrm-app
           ContainerPort: 8000
           TargetGroupArn: !Ref ApplicationServiceTargetGroup
-      Role: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS"
       TaskDefinition: !Ref ApplicationTaskDefinition
 
   ApplicationSecurityGroup:
