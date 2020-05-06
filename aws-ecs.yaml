@@ -103,7 +103,7 @@ Resources:
           Subnets:
             - "Fn::ImportValue": !Ref PublicSubnetAReference
             - "Fn::ImportValue": !Ref PublicSubnetBReference
-      DesiredCount: 1
+      DesiredCount: !Ref EC2DesiredCapacity
       LoadBalancers:
         - ContainerName: tinydevcrm-app
           ContainerPort: 8000
@@ -117,18 +117,11 @@ Resources:
       VpcId: !ImportValue
         Ref: VPCReference
       SecurityGroupEgress:
-        - IpProtocol: udp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: -1
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: -1
 
   ApplicationTaskDefinition:
     Type: "AWS::ECS::TaskDefinition"
