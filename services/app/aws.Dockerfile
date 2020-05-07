@@ -60,14 +60,6 @@ ENV HOME=/home/app
 ENV APP_HOME=/home/app/web
 RUN mkdir $APP_HOME
 
-# Need to create the directory here, since we're using a non-root user, we'll
-# get a permission denied error when collectstatic command is run on a
-# non-existent directory. We can either create the directory beforehand, or
-# change the permissions of the directory after mounting (this is former
-# solution).
-RUN mkdir $APP_HOME/staticfiles
-WORKDIR $APP_HOME
-
 # install dependencies
 RUN apk update && apk add libpq
 COPY --from=builder --chown=app:app /usr/src/app/wheels /wheels
@@ -89,6 +81,18 @@ COPY ./src $APP_HOME
 
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME
+
+# Need to create the directory here, since we're using a non-root user, we'll
+# get a permission denied error when collectstatic command is run on a
+# non-existent directory. We can either create the directory beforehand, or
+# change the permissions of the directory after mounting (this is former
+# solution).
+RUN mkdir $APP_HOME/staticfiles
+RUN chown app:app $APP_HOME/staticfiles
+VOLUME ${APP_HOME}/staticfiles
+
+# Change app directory
+WORKDIR $APP_HOME
 
 # change to the app user
 USER app
