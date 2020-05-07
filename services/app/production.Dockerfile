@@ -71,6 +71,10 @@ COPY --from=builder /usr/src/app/requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache /wheels/*
 
+# Build 'uwsgi': https://stackoverflow.com/a/46204015/1497211
+RUN apk add build-base python3-dev linux-headers pcre-dev
+RUN pip install uwsgi==2.0.17
+
 # copy entrypoint.production.sh
 COPY ./conf/entrypoint.production.sh $APP_HOME
 
