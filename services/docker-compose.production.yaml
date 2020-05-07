@@ -5,7 +5,15 @@ services:
         build:
             context: ./app
             dockerfile: production.Dockerfile
-        command: gunicorn wsgi:application --bind 0.0.0.0:8000
+        command:
+            - uwsgi
+            - --http=0.0.0.0:8000
+            - --module=wsgi
+            - --master
+            - --check-static=/home/app/web/staticfiles
+            - --die-on-term
+            - --processes=1
+            - --threads=1
         volumes:
             - static_volume:/home/app/web/staticfiles
         expose:
