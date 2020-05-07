@@ -129,18 +129,22 @@ Resources:
       ContainerDefinitions:
         - Name: tinydevcrm-app
           Command:
-            - gunicorn
-            - "wsgi:application"
-            - "--bind"
-            - "0.0.0.0:8000"
+            - uwsgi
+            - --http=0.0.0.0:8000
+            - --module=wsgi
+            - --master
+            - --check-static=/home/app/web/staticfiles
+            - --die-on-term
+            - --processes=1
+            - --threads=1
           Cpu: 245
           Environment:
             - Name: DEBUG
-              Value: 1
+              Value: '1'
             - Name: SECRET_KEY
               Value: change_me
             - Name: DJANGO_ALLOWED_HOSTS
-              Value: "*"
+              Value: '*'
             - Name: SQL_ENGINE
               Value: django.db.backends.sqlite3
             - Name: SQL_DATABASE
