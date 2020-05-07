@@ -323,6 +323,14 @@ Resources:
   EC2LaunchConfiguration:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Description: Launch configuration for EC2 instances acting as ECS hosts.
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          commands:
+            01_volume_staticfiles:
+              command: mkdir -p /home/app/web/staticfiles
+            02_volume_staticfiles_permissions:
+              command: chown -R 1000:1000 /home/app/web/staticfiles
     Properties:
       IamInstanceProfile: !Ref EC2InstanceProfile
       ImageId: !Ref EC2HostAMI
@@ -331,7 +339,12 @@ Resources:
       SecurityGroups:
         - Ref: EC2HostSecurityGroup
       UserData: !Base64
-        "Fn::Sub": "#!/bin/bash -xe\necho ECS_CLUSTER=${ECSClusterName} >> /etc/ecs/ecs.config\nyum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2AutoScalingGroup --region ${AWS::Region}\n"
+        "Fn::Sub": |
+          #!/bin/bash -xe
+          echo ECS_CLUSTER=${ECSClusterName} >> /etc/ecs/ecs.config
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --region ${AWS::Region}
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2AutoScalingGroup --region ${AWS::Region}
 
   EC2SecurityGroupIngressFromPublicALB:
     Type: "AWS::EC2::SecurityGroupIngress"
