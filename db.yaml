@@ -36,6 +36,16 @@ Parameters:
     Default: tinydevcrm-ec2-networking-vpc
     Description: "Reference to VPC deployed as part of stack `tinydevcrm-ec2-networking.yaml`."
 
+  EC2HostAMI:
+    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+    Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+    Description: Amazon Linux 1 ECS-optimized AMI; TODO REPLACE with Amazon Linux 2 ECS-optimized AMI
+
+  EC2HostInstanceType:
+    Type: String
+    Default: t2.medium
+    Description: EC2 host instance type.
+
 Resources:
   DatabaseEC2AutoScalingRole:
     Type: "AWS::IAM::Role"
@@ -199,3 +209,80 @@ Resources:
       Tags:
         - Key: Name
           Value: rexray-vol
+
+  DatabaseEC2LaunchConfiguration:
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Description: TODO UPDATE AFTER I FIGURE OUT HOW THE ENTIRE DATABASE WORKS
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          commands:
+            "01_add_instance_to_cluster":
+              command: !Sub echo ECS_CLUSTER=${ECSClusterName} >> /etc/ecs/ecs.config
+            "02_start_ecs_agent":
+              command: start ecs
+          files:
+            /etc/cfn/cfn-hup.conf:
+              content: !Sub "[main]\nstack=${AWS::StackId}\nregion=${AWS::Region}\n"
+              group: root
+              mode: 256
+              owner: root
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Sub "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.DatabaseEC2LaunchConfiguration.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource DatabaseEC2LaunchConfiguration\n"
+          packages:
+            yum:
+              aws-cli: []
+              ecs-init: []
+              jq: []
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: "true"
+                ensureRunning: "true"
+                files:
+                  - /etc/cfn/cfn-hup.conf
+                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+    Properties:
+      AssociatePublicIpAddress: true
+      IamInstanceProfile: !Ref DatabaseEC2InstanceProfile
+      ImageId: !Ref EC2HostAMI
+      InstanceType: !Ref EC2HostInstanceType
+      KeyName: !Ref EC2KeyName
+      SecurityGroups:
+        - Ref: DatabaseEC2SecurityGroup
+      UserData: !Base64
+        "Fn::Sub": "#!/bin/bash\nyum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource DatabaseEC2LaunchConfiguration\n/opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource DatabaseEC2AutoScalingGroup\n\nexec 2>>/var/log/ecs/ecs-agent-install.log\nset -x\nuntil curl -s http://localhost:51678/v1/metadata\ndo\n   sleep 1\ndone\ndocker plugin install rexray/ebs REXRAY_PREEMPT=true EBS_REGION=us-east-1 --grant-all-permissions\nstop ecs \nstart ecs\n"
+
+  DatabaseEC2AutoScalingGroup:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Description: TODO UPDATE WITH PARAMETERS, Also figure out what the update policy really means
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT5M
+    Properties:
+      AvailabilityZones:
+        - "Fn::Select":
+            - "0"
+            - "Fn::GetAZs": !Ref "AWS::Region"
+      DesiredCapacity: "2"
+      LaunchConfigurationName: !Ref DatabaseEC2LaunchConfiguration
+      MaxSize: "2"
+      MinSize: "2"
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: "true"
+          Value: tinydevcrm-db-compute
+      VPCZoneIdentifier:
+        - "Fn::ImportValue": !Ref PublicSubnetAReference
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: "1"
+        MinInstancesInService: "1"
+        PauseTime: PT5M
+        SuspendProcesses:
+          - HealthCheck
+          - ReplaceUnhealthy
+          - AZRebalance
+          - AlarmNotification
+          - ScheduledActions
+        WaitOnResourceSignals: "true"
