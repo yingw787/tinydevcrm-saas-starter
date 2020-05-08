@@ -37,63 +37,6 @@ Parameters:
     Description: "Reference to VPC deployed as part of stack `tinydevcrm-ec2-networking.yaml`."
 
 Resources:
-  DatabaseLogGroup:
-    Type: "AWS::Logs::LogGroup"
-    Properties:
-      LogGroupName: !Sub "/${AWS::StackName}/ecs/tinydevcrm-db"
-      RetentionInDays: 7
-
-  DatabaseECSCluster:
-    Type: "AWS::ECS::Cluster"
-    Properties:
-      ClusterName: !Sub ${ECSClusterName}
-
-  DatabaseNLB:
-    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
-    Description: Network load balancer.
-    Properties:
-      Scheme: internet-facing
-      Subnets:
-        - "Fn::ImportValue": !Ref PublicSubnetAReference
-        - "Fn::ImportValue": !Ref PublicSubnetBReference
-      Type: network
-
-  DatabaseNLBTargetGroup:
-    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
-    Description: Target group for network load balancer.
-    Properties:
-      Port: 5432
-      Protocol: TCP
-      TargetType: ip
-      VpcId:
-        "Fn::ImportValue": !Ref VPCReference
-
-  DatabaseNLBListener:
-    Type: "AWS::ElasticLoadBalancingV2::Listener"
-    Properties:
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref DatabaseNLBTargetGroup
-      LoadBalancerArn: !Ref DatabaseNLB
-      Port: 5432
-      Protocol: TCP
-
-  DatabaseEC2SecurityGroup:
-    Type: "AWS::EC2::SecurityGroup"
-    Properties:
-      GroupDescription: Enable SSH access via port 22
-      SecurityGroupIngress:
-        - CidrIp: !Ref SSHLocation
-          FromPort: "22"
-          IpProtocol: tcp
-          ToPort: "22"
-        - CidrIp: !Ref SSHLocation
-          FromPort: "5432"
-          IpProtocol: tcp
-          ToPort: "5432"
-      VpcId:
-        "Fn::ImportValue": !Ref VPCReference
-
   DatabaseEC2AutoScalingRole:
     Type: "AWS::IAM::Role"
     Description: Role to define EC2 autoscaling. NOTE that the EC2 autoscaling group may fail to stabilize if this role is mis-defined.
@@ -120,13 +63,6 @@ Resources:
                   - "ecs:UpdateService"
                 Resource: "*"
 
-  DatabaseEC2InstanceProfile:
-    Type: "AWS::IAM::InstanceProfile"
-    Properties:
-      Path: /
-      Roles:
-        - !Ref DatabaseEC2HostsRole
-
   DatabaseEC2HostsRole:
     Type: "AWS::IAM::Role"
     Description: "Role for EC2 hosts as passed by resource 'DatabaseEC2InstanceProfile'. This allows the ECS agent on the EC2 hosts to communicate with the ECS control plane, and download container images from AWS ECR to run with the host, in addition to updating EBS volume permissions."
@@ -143,7 +79,7 @@ Resources:
       Policies:
         - PolicyName: ec2-hosts
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
@@ -163,26 +99,90 @@ Resources:
                 Resource: "*"
         - PolicyName: ec2-volumes
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
-                  - ec2:AttachVolume
-                  - ec2:CreateVolume
-                  - ec2:CreateSnapshot
-                  - ec2:CreateTags
-                  - ec2:DeleteVolume
-                  - ec2:DeleteSnapshot
-                  - ec2:DescribeAvailabilityZones
-                  - ec2:DescribeInstances
-                  - ec2:DescribeVolumes
-                  - ec2:DescribeVolumeAttribute
-                  - ec2:DescribeVolumeStatus
-                  - ec2:DescribeSnapshots
-                  - ec2:CopySnapshot
-                  - ec2:DescribeSnapshotAttribute
-                  - ec2:DetachVolume
-                  - ec2:ModifySnapshotAttribute
-                  - ec2:ModifyVolumeAttribute
-                  - ec2:DescribeTags
-                Resource: '*'
+                  - "ec2:AttachVolume"
+                  - "ec2:CreateVolume"
+                  - "ec2:CreateSnapshot"
+                  - "ec2:CreateTags"
+                  - "ec2:DeleteVolume"
+                  - "ec2:DeleteSnapshot"
+                  - "ec2:DescribeAvailabilityZones"
+                  - "ec2:DescribeInstances"
+                  - "ec2:DescribeVolumes"
+                  - "ec2:DescribeVolumeAttribute"
+                  - "ec2:DescribeVolumeStatus"
+                  - "ec2:DescribeSnapshots"
+                  - "ec2:CopySnapshot"
+                  - "ec2:DescribeSnapshotAttribute"
+                  - "ec2:DetachVolume"
+                  - "ec2:ModifySnapshotAttribute"
+                  - "ec2:ModifyVolumeAttribute"
+                  - "ec2:DescribeTags"
+                Resource: "*"
+
+  DatabaseEC2InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: /
+      Roles:
+        - Ref: DatabaseEC2HostsRole
+
+  DatabaseEC2SecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - CidrIp: !Ref SSHLocation
+          FromPort: "22"
+          IpProtocol: tcp
+          ToPort: "22"
+        - CidrIp: !Ref SSHLocation
+          FromPort: "5432"
+          IpProtocol: tcp
+          ToPort: "5432"
+      VpcId: !ImportValue
+        Ref: VPCReference
+
+  DatabaseECSCluster:
+    Type: "AWS::ECS::Cluster"
+    Properties:
+      ClusterName: !Sub ${ECSClusterName}
+
+  DatabaseLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    Properties:
+      LogGroupName: !Sub "/${AWS::StackName}/ecs/tinydevcrm-db"
+      RetentionInDays: 7
+
+  DatabaseNLB:
+    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    Description: Network load balancer.
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+        - "Fn::ImportValue": !Ref PublicSubnetAReference
+        - "Fn::ImportValue": !Ref PublicSubnetBReference
+      Type: network
+
+  DatabaseNLBListener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref DatabaseNLBTargetGroup
+      LoadBalancerArn: !Ref DatabaseNLB
+      Port: 5432
+      Protocol: TCP
+
+  DatabaseNLBTargetGroup:
+    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+    Description: Target group for network load balancer.
+    Properties:
+      Port: 5432
+      Protocol: TCP
+      TargetType: ip
+      VpcId: !ImportValue
+        Ref: VPCReference
