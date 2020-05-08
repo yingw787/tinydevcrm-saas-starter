@@ -30,3 +30,10 @@ Parameters:
     Type: String
     Default: tinydevcrm-ec2-networking-vpc
     Description: "Reference to VPC deployed as part of stack `tinydevcrm-ec2-networking.yaml`."
+
+Resources:
+  ApplicationLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    Properties:
+      LogGroupName: !Sub "/${AWS::StackName}/ecs/tinydevcrm-db"
+      RetentionInDays: 7
