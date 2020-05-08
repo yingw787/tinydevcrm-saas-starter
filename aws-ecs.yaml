@@ -328,9 +328,9 @@ Resources:
         config:
           commands:
             01_volume_staticfiles:
-              command: mkdir -p /home/app/web/staticfiles
+              command: mkdir -p /data/home/app/web/staticfiles
             02_volume_staticfiles_permissions:
-              command: chown -R 1000:1000 /home/app/web/staticfiles
+              command: chown -R 1000:1000 /data/home/app/web/staticfiles
     Properties:
       IamInstanceProfile: !Ref EC2InstanceProfile
       ImageId: !Ref EC2HostAMI

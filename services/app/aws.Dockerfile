@@ -58,7 +58,9 @@ RUN addgroup -g 1000 app && \
 # create the home directory
 ENV HOME=/home/app
 ENV APP_HOME=/home/app/web
-RUN mkdir $APP_HOME
+RUN mkdir -p $APP_HOME
+RUN chown -R app:app ${APP_HOME}
+WORKDIR $APP_HOME
 
 # install dependencies
 RUN apk update && apk add libpq
@@ -76,23 +78,17 @@ COPY ./conf/entrypoint.aws.sh $APP_HOME
 RUN chmod +x ${APP_HOME}/entrypoint.aws.sh
 ENTRYPOINT [ "/home/app/web/entrypoint.aws.sh" ]
 
-# copy project
-COPY ./src $APP_HOME
-
-# chown all the files to the app user
-RUN chown -R app:app $APP_HOME
-
 # Need to create the directory here, since we're using a non-root user, we'll
 # get a permission denied error when collectstatic command is run on a
 # non-existent directory. We can either create the directory beforehand, or
 # change the permissions of the directory after mounting (this is former
 # solution).
-RUN mkdir $APP_HOME/staticfiles
+RUN mkdir -p $APP_HOME/staticfiles
 RUN chown app:app $APP_HOME/staticfiles
 VOLUME ${APP_HOME}/staticfiles
 
-# Change app directory
-WORKDIR $APP_HOME
+# copy project
+COPY ./src $APP_HOME
 
 # change to the app user
 USER app
