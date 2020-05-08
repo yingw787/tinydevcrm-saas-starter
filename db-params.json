@@ -1,0 +1,10 @@
+[
+    {
+        "ParameterKey": "EC2KeyName",
+        "ParameterValue": "admin"
+    },
+    {
+        "ParameterKey": "SSHLocation",
+        "ParameterValue": "23.82.8.183/0"
+    }
+]
