@@ -7,6 +7,11 @@ Parameters:
     Type: "AWS::EC2::KeyPair::KeyName"
     Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
 
+  ECSClusterName:
+    Type: String
+    Default: tinydevcrm-db
+    Description: Name of the ECS cluster for the database.
+
   PublicSubnetAReference:
     Type: String
     Default: tinydevcrm-ec2-networking-subnet-a
@@ -37,3 +42,8 @@ Resources:
     Properties:
       LogGroupName: !Sub "/${AWS::StackName}/ecs/tinydevcrm-db"
       RetentionInDays: 7
+
+  DatabaseCluster:
+    Type: "AWS::ECS::Cluster"
+    Properties:
+      ClusterName: !Sub ${ECSClusterName}
