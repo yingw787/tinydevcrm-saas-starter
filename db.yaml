@@ -75,3 +75,19 @@ Resources:
       LoadBalancerArn: !Ref DatabaseLoadBalancer
       Port: 5432
       Protocol: TCP
+
+  DatabaseSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - CidrIp: !Ref SSHLocation
+          FromPort: "22"
+          IpProtocol: tcp
+          ToPort: "22"
+        - CidrIp: !Ref SSHLocation
+          FromPort: "5432"
+          IpProtocol: tcp
+          ToPort: "5432"
+      VpcId:
+        "Fn::ImportValue": !Ref VPCReference
