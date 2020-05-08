@@ -39,6 +39,8 @@ from django.urls import re_path
 # You may not be able to reverse all URLs in this namespace' arrives from this
 # code block.
 
+from . import Dummy
+
 
 urlpatterns = [
     path(
@@ -64,5 +66,11 @@ urlpatterns = [
             ),
         namespace='v1'
         )
+    ),
+    path(
+        # Matches the root route only.
+        '',
+        Dummy.HomePageView.as_view(),
+        name='rootdummy'
     ),
 ]
