@@ -37,7 +37,7 @@ Parameters:
     Description: "Reference to VPC deployed as part of stack `tinydevcrm-ec2-networking.yaml`."
 
 Resources:
-  ApplicationLogGroup:
+  DatabaseLogGroup:
     Type: "AWS::Logs::LogGroup"
     Properties:
       LogGroupName: !Sub "/${AWS::StackName}/ecs/tinydevcrm-db"
@@ -47,3 +47,31 @@ Resources:
     Type: "AWS::ECS::Cluster"
     Properties:
       ClusterName: !Sub ${ECSClusterName}
+
+  DatabaseLoadBalancer:
+    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+        - "Fn::ImportValue": !Ref PublicSubnetAReference
+        - "Fn::ImportValue": !Ref PublicSubnetBReference
+      Type: network
+
+  DatabaseTargetGroup:
+    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+    Properties:
+      Port: 5432
+      Protocol: TCP
+      TargetType: ip
+      VpcId:
+        "Fn::ImportValue": !Ref VPCReference
+
+  DatabaseLoadBalancerListener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref DatabaseTargetGroup
+      LoadBalancerArn: !Ref DatabaseLoadBalancer
+      Port: 5432
+      Protocol: TCP
