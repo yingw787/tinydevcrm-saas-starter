@@ -27,6 +27,8 @@ run-aws-release:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up --build --abort-on-container-exit migrate
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose run app python3 manage.py collectstatic --no-input
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up -d --build
+	sleep 5
+	xdg-open http://localhost:1337/admin
 
 create-superuser:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml exec app python3 manage.py createsuperuser
