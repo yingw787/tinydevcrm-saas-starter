@@ -91,3 +91,6 @@ aws-db-create:
 
 aws-db-deploy:
 	aws cloudformation deploy --stack-name tinydevcrm-db --template-file db.yaml --capabilities CAPABILITY_NAMED_IAM
+
+aws-db-delete:
+	aws cloudformation delete-stack --stack-name tinydevcrm-db
