@@ -15,6 +15,8 @@ export AWS_ECR_APP_REPOSITORY_NAME=tinydevcrm-ecr/app
 export AWS_ECR_DB_REPOSITORY_NAME=tinydevcrm-ecr/db
 export AWS_ECR_NGINX_REPOSITORY_NAME=tinydevcrm-ecr/nginx
 
+export AWS_NLB_DNS_NAME ?= $(shell aws cloudformation describe-stacks --stack-name tinydevcrm-db --query "Stacks[0].Outputs[?OutputKey=='DatabaseNLBDNSName'].OutputValue" --output text)
+
 version:
 	@ echo '{"Version": "$(APP_VERSION)"}'
 
@@ -94,3 +96,7 @@ aws-db-deploy:
 
 aws-db-delete:
 	aws cloudformation delete-stack --stack-name tinydevcrm-db
+
+# Conditioned on having a deployed database up and running.
+aws-psql:
+	PGPASSWORD=my-secret-pw psql -U postgres -h $(AWS_NLB_DNS_NAME) -d postgres
