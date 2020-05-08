@@ -125,11 +125,11 @@ Resources:
     Properties:
       Path: /
       Roles:
-        - !Ref DatabaseEC2Role
+        - !Ref DatabaseEC2HostsRole
 
-  DatabaseEC2Role:
+  DatabaseEC2HostsRole:
     Type: "AWS::IAM::Role"
-    Description: "Role for EC2 hosts as passed by resource 'EC2InstanceProfile'. This allows the ECS agent on the EC2 hosts to communicate with the ECS control plane, and download container images from AWS ECR to run with the host."
+    Description: "Role for EC2 hosts as passed by resource 'DatabaseEC2InstanceProfile'. This allows the ECS agent on the EC2 hosts to communicate with the ECS control plane, and download container images from AWS ECR to run with the host, in addition to updating EBS volume permissions."
     Properties:
       AssumeRolePolicyDocument:
         Statement:
