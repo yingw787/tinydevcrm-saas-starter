@@ -1,3 +1,32 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: Database definition for the TinyDevCRM application.
+
+Parameters:
+  EC2KeyName:
+    Type: "AWS::EC2::KeyPair::KeyName"
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
+
+  PublicSubnetAReference:
+    Type: String
+    Default: tinydevcrm-ec2-networking-subnet-a
+    Description: "Reference to public subnet A as part of stack 'tinydevcrm-ec2-networking.yaml'."
+
+  PublicSubnetBReference:
+    Type: String
+    Default: tinydevcrm-ec2-networking-subnet-b
+    Description: "Reference to public subnet B as part of stack 'tinydevcrm-ec2-networking.yaml'."
+
+  SSHLocation:
+    Type: String
+    Default: "0.0.0.0/0"
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+    Description: " The IP address range that can be used to SSH to the EC2 instances"
+    MaxLength: "18"
+    MinLength: "9"
+
+  VPCReference:
+    Type: String
+    Default: tinydevcrm-ec2-networking-vpc
+    Description: "Reference to VPC deployed as part of stack `tinydevcrm-ec2-networking.yaml`."
