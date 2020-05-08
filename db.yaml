@@ -3,6 +3,16 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: Database definition for the TinyDevCRM application.
 
 Parameters:
+  DatabaseECRDockerImageTag:
+    Type: String
+    Default: latest
+    Description: Tag for the PostgreSQL database Docker image.
+
+  DatabaseECRRepositoryName:
+    Type: String
+    Default: tinydevcrm-ecr/db
+    Description: Elastic Container Registry repository name where Docker builds for the PostgreSQL database go.
+
   EC2KeyName:
     Type: "AWS::EC2::KeyPair::KeyName"
     Description: Name of an existing EC2 KeyPair to enable SSH access to the EC2 instances
@@ -309,7 +319,7 @@ Resources:
           MountPoints:
             - ContainerPath: /var/lib/postgresql/data
               SourceVolume: rexray-vol
-          Image: postgres
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${DatabaseECRRepositoryName}:${DatabaseECRDockerImageTag}"
           Essential: true
           Name: postgres
       PlacementConstraints:
