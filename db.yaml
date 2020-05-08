@@ -43,13 +43,14 @@ Resources:
       LogGroupName: !Sub "/${AWS::StackName}/ecs/tinydevcrm-db"
       RetentionInDays: 7
 
-  DatabaseCluster:
+  DatabaseECSCluster:
     Type: "AWS::ECS::Cluster"
     Properties:
       ClusterName: !Sub ${ECSClusterName}
 
-  DatabaseLoadBalancer:
+  DatabaseNLB:
     Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    Description: Network load balancer.
     Properties:
       Scheme: internet-facing
       Subnets:
@@ -57,8 +58,9 @@ Resources:
         - "Fn::ImportValue": !Ref PublicSubnetBReference
       Type: network
 
-  DatabaseTargetGroup:
+  DatabaseNLBTargetGroup:
     Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+    Description: Target group for network load balancer.
     Properties:
       Port: 5432
       Protocol: TCP
@@ -66,17 +68,17 @@ Resources:
       VpcId:
         "Fn::ImportValue": !Ref VPCReference
 
-  DatabaseLoadBalancerListener:
+  DatabaseNLBListener:
     Type: "AWS::ElasticLoadBalancingV2::Listener"
     Properties:
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref DatabaseTargetGroup
-      LoadBalancerArn: !Ref DatabaseLoadBalancer
+          TargetGroupArn: !Ref DatabaseNLBTargetGroup
+      LoadBalancerArn: !Ref DatabaseNLB
       Port: 5432
       Protocol: TCP
 
-  DatabaseSecurityGroup:
+  DatabaseEC2SecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
       GroupDescription: Enable SSH access via port 22
@@ -91,3 +93,96 @@ Resources:
           ToPort: "5432"
       VpcId:
         "Fn::ImportValue": !Ref VPCReference
+
+  DatabaseEC2AutoScalingRole:
+    Type: "AWS::IAM::Role"
+    Description: Role to define EC2 autoscaling. NOTE that the EC2 autoscaling group may fail to stabilize if this role is mis-defined.
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - application-autoscaling.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: tinydevcrm-db-service-autoscaling
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "application-autoscaling:*"
+                  - "cloudwatch:DescribeAlarms"
+                  - "cloudwatch:PutMetricAlarm"
+                  - "ecs:DescribeServices"
+                  - "ecs:UpdateService"
+                Resource: "*"
+
+  DatabaseEC2InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: /
+      Roles:
+        - !Ref DatabaseEC2Role
+
+  DatabaseEC2Role:
+    Type: "AWS::IAM::Role"
+    Description: "Role for EC2 hosts as passed by resource 'EC2InstanceProfile'. This allows the ECS agent on the EC2 hosts to communicate with the ECS control plane, and download container images from AWS ECR to run with the host."
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: ec2-hosts
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ecs:CreateCluster"
+                  - "ecs:DeregisterContainerInstance"
+                  - "ecs:DiscoverPollEndpoint"
+                  - "ecs:Poll"
+                  - "ecs:RegisterContainerInstance"
+                  - "ecs:StartTelemetrySession"
+                  - "ecs:Submit*"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                  - "ecr:GetAuthorizationToken"
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:BatchGetImage"
+                  - "ecr:GetDownloadUrlForLayer"
+                Resource: "*"
+        - PolicyName: ec2-volumes
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:AttachVolume
+                  - ec2:CreateVolume
+                  - ec2:CreateSnapshot
+                  - ec2:CreateTags
+                  - ec2:DeleteVolume
+                  - ec2:DeleteSnapshot
+                  - ec2:DescribeAvailabilityZones
+                  - ec2:DescribeInstances
+                  - ec2:DescribeVolumes
+                  - ec2:DescribeVolumeAttribute
+                  - ec2:DescribeVolumeStatus
+                  - ec2:DescribeSnapshots
+                  - ec2:CopySnapshot
+                  - ec2:DescribeSnapshotAttribute
+                  - ec2:DetachVolume
+                  - ec2:ModifySnapshotAttribute
+                  - ec2:ModifyVolumeAttribute
+                  - ec2:DescribeTags
+                Resource: '*'
