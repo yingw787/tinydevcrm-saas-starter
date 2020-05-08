@@ -136,7 +136,7 @@ Resources:
           Cpu: 245
           Environment:
             - Name: DEBUG
-              Value: 1
+              Value: '1'
             - Name: SECRET_KEY
               Value: change_me
             - Name: DJANGO_ALLOWED_HOSTS
@@ -166,6 +166,44 @@ Resources:
               SourceVolume: static_volume
           PortMappings:
             - ContainerPort: 8000
+        - Name: collectstatic
+          Command:
+            - python3
+            - manage.py
+            - collectstatic
+            - "--no-input"
+          Cpu: 5
+          Environment:
+            - Name: DEBUG
+              Value: '1'
+            - Name: SECRET_KEY
+              Value: change_me
+            - Name: DJANGO_ALLOWED_HOSTS
+              Value: '*'
+            - Name: SQL_ENGINE
+              Value: django.db.backends.sqlite3
+            - Name: SQL_DATABASE
+              Value: db.sqlite3
+            - Name: SQL_USER
+              Value: user
+            - Name: SQL_PASSWORD
+              Value: password
+            - Name: SQL_HOST
+              Value: localhost
+            - Name: SQL_PORT
+              Value: 5432
+          Essential: false
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/tinydevcrm-ecr/app:${ApplicationDockerImageTag}"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "/${AWS::StackName}/ecs/tinydevcrm"
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: docker
+          MemoryReservation: 5
+          MountPoints:
+            - ContainerPath: /home/app/web/staticfiles
+              SourceVolume: static_volume
       Family: tinydevcrm-app
       NetworkMode: awsvpc
       Volumes:
@@ -281,6 +319,14 @@ Resources:
   EC2LaunchConfiguration:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Description: Launch configuration for EC2 instances acting as ECS hosts.
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          commands:
+            01_volume_staticfiles:
+              command: mkdir -p /data/home/app/web/staticfiles
+            02_volume_staticfiles_permissions:
+              command: chown -R 1000:1000 /data/home/app/web/staticfiles
     Properties:
       IamInstanceProfile: !Ref EC2InstanceProfile
       ImageId: !Ref EC2HostAMI
@@ -289,7 +335,12 @@ Resources:
       SecurityGroups:
         - Ref: EC2HostSecurityGroup
       UserData: !Base64
-        "Fn::Sub": "#!/bin/bash -xe\necho ECS_CLUSTER=${ECSClusterName} >> /etc/ecs/ecs.config\nyum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2AutoScalingGroup --region ${AWS::Region}\n"
+        "Fn::Sub": |
+          #!/bin/bash -xe
+          echo ECS_CLUSTER=${ECSClusterName} >> /etc/ecs/ecs.config
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --region ${AWS::Region}
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2AutoScalingGroup --region ${AWS::Region}
 
   EC2SecurityGroupIngressFromPublicALB:
     Type: "AWS::EC2::SecurityGroupIngress"
