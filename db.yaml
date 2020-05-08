@@ -286,3 +286,79 @@ Resources:
           - AlarmNotification
           - ScheduledActions
         WaitOnResourceSignals: "true"
+
+  DatabaseECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Description: TODO ATTENTION
+    DependsOn:
+      - DatabaseEBSVolume
+    Properties:
+      ContainerDefinitions:
+        - LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref DatabaseLogGroup
+              awslogs-region: !Sub ${AWS::Region}
+              awslogs-stream-prefix: ecs
+          PortMappings:
+            - ContainerPort: 5432
+              Protocol: tcp
+          Environment:
+            - Name: POSTGRES_PASSWORD
+              Value: my-secret-pw
+          MountPoints:
+            - ContainerPath: /var/lib/postgresql/data
+              SourceVolume: rexray-vol
+          Image: postgres
+          Essential: true
+          Name: postgres
+      PlacementConstraints:
+        - Type: memberOf
+          Expression: attribute:ecs.availability-zone==us-east-1a
+      Memory: '512'
+      Family: postgres
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - EC2
+      Cpu: '512'
+      Volumes:
+        - Name: rexray-vol
+          DockerVolumeConfiguration:
+            Autoprovision: true
+            Scope: shared
+            Driver: rexray/ebs
+            DriverOpts:
+              volumetype: gp2
+              size: '5'
+
+  DatabaseECSService:
+    Type: AWS::ECS::Service
+    Description: TODO ATTENTION
+    DependsOn:
+      - DatabaseNLBListener
+    Properties:
+      Cluster: !Ref DatabaseECSCluster
+      ServiceName: postgres-svc
+      TaskDefinition: !Ref DatabaseECSTaskDefinition
+      LoadBalancers:
+        - TargetGroupArn: !Ref DatabaseNLBTargetGroup
+          ContainerName: postgres
+          ContainerPort: 5432
+      DesiredCount: 1
+      LaunchType: EC2
+      HealthCheckGracePeriodSeconds: 60
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - "Fn::ImportValue": !Ref PublicSubnetAReference
+          SecurityGroups:
+            - !Ref DatabaseEC2SecurityGroup
+          AssignPublicIp: DISABLED
+
+Outputs:
+  DatabaseNLBDNSName:
+    Description: The fully qualified DNS name of the network load balancer.
+    Value: !GetAtt DatabaseNLB.DNSName
