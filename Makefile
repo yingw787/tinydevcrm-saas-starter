@@ -77,7 +77,7 @@ aws-deploy-ecr:
 aws-delete-ecr:
 	aws cloudformation delete-stack --stack-name tinydevcrm-ecr
 
-aws-create-ecs:
+aws-create-ecs: publish-app publish-db
 	aws cloudformation create-stack --stack-name tinydevcrm-ecs --template-body file://aws-ecs.yaml --parameters file://aws-ecs-params.json --capabilities CAPABILITY_NAMED_IAM
 
 aws-deploy-ecs:
@@ -85,3 +85,9 @@ aws-deploy-ecs:
 
 aws-delete-ecs:
 	aws cloudformation delete-stack --stack-name tinydevcrm-ecs
+
+aws-db-create:
+	aws cloudformation create-stack --stack-name tinydevcrm-db --template-body file://db.yaml --parameters file://db-params.json --capabilities CAPABILITY_NAMED_IAM
+
+aws-db-deploy:
+	aws cloudformation deploy --stack-name tinydevcrm-db --template-file db.yaml --capabilities CAPABILITY_NAMED_IAM
