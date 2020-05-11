@@ -16,7 +16,7 @@ services:
     depends_on:
       - db
     volumes:
-      - static_volume:/home/app/web/staticfiles
+      - static_volume:/public
     command:
       - gunicorn
       - wsgi:application
@@ -50,38 +50,7 @@ services:
       context: ./nginx
       dockerfile: aws.Dockerfile
     volumes:
-      - static_volume:/home/app/web/staticfiles
-    depends_on:
-      - app
-    ports:
-        - 8000:8000
-  migrate:
-    extends:
-      service: release
-    depends_on:
-      - db
-    command:
-      - python3
-      - manage.py
-      - migrate
-      - --no-input
-  db:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_DB_REPOSITORY_NAME}:${APP_VERSION}
-    build:
-      context: ./db
-      dockerfile: Dockerfile
-    env_file:
-      # Change ./db/conf/.env.aws-sample to ./db/conf/.env.aws
-      ./db/conf/.env.aws
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-  nginx:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_NGINX_REPOSITORY_NAME}:${APP_VERSION}
-    build:
-      context: ./nginx
-      dockerfile: aws.Dockerfile
-    volumes:
-      - static_volume:/home/app/web/staticfiles
+      - static_volume:/public
     depends_on:
       - app
     ports:
