@@ -59,14 +59,16 @@ RUN addgroup -g 1000 app && \
 ENV HOME=/home/app
 ENV APP_HOME=/home/app/web
 RUN mkdir $APP_HOME
+WORKDIR $APP_HOME
 
 # Need to create the directory here, since we're using a non-root user, we'll
 # get a permission denied error when collectstatic command is run on a
 # non-existent directory. We can either create the directory beforehand, or
 # change the permissions of the directory after mounting (this is former
 # solution).
-RUN mkdir $APP_HOME/staticfiles
-WORKDIR $APP_HOME
+RUN mkdir /public
+RUN chown app:app /public
+VOLUME /public
 
 # install dependencies
 RUN apk update && apk add libpq
