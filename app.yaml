@@ -124,10 +124,14 @@ Resources:
       ContainerDefinitions:
         - Name: tinydevcrm-app
           Command:
-            - gunicorn
-            - "wsgi:application"
-            - "--bind"
-            - "0.0.0.0:8000"
+            - uwsgi
+            - --http=0.0.0.0:8000
+            - --module=wsgi
+            - --master
+            - --check-static=/public
+            - --die-on-term
+            - --processes=1
+            - --threads=1
           Cpu: 245
           Environment:
             - Name: DEBUG
@@ -157,8 +161,8 @@ Resources:
               awslogs-stream-prefix: docker
           MemoryReservation: 395
           MountPoints:
-            - ContainerPath: /home/app/web
-              SourceVolume: static_volume
+            - ContainerPath: /public
+              SourceVolume: public
           PortMappings:
             - ContainerPort: 8000
         - Name: collectstatic
@@ -197,14 +201,14 @@ Resources:
               awslogs-stream-prefix: docker
           MemoryReservation: 5
           MountPoints:
-            - ContainerPath: /home/app/web
-              SourceVolume: static_volume
+            - ContainerPath: /public
+              SourceVolume: public
       Family: tinydevcrm-app
       NetworkMode: awsvpc
       Volumes:
-        - Name: static_volume
+        - Name: public
           Host:
-            SourcePath: /data/home/app/web
+            SourcePath: /data/public
 
   ApplicationServiceTargetGroup:
     Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
@@ -323,10 +327,10 @@ Resources:
       AWS::CloudFormation::Init:
         config:
           commands:
-            01_volume_staticfiles:
-              command: mkdir -p /data/home/app/web/staticfiles
-            02_volume_staticfiles_permissions:
-              command: chown -R 1000:1000 /data/home/app/web/staticfiles
+            01_volume_public:
+              command: mkdir -p /data/public
+            02_volume_public_permissions:
+              command: chown -R 1000:1000 /data/public
     Properties:
       IamInstanceProfile: !Ref EC2InstanceProfile
       ImageId: !Ref EC2HostAMI
@@ -436,3 +440,8 @@ Resources:
           IpProtocol: -1
       VpcId: !ImportValue
         Ref: VPCReference
+
+Outputs:
+  PublicLoadBalancerDNSName:
+    Description: The fully qualified DNS name of the network load balancer.
+    Value: !GetAtt PublicLoadBalancer.DNSName
