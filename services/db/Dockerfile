@@ -53,3 +53,8 @@ RUN /usr/bin/install -c -m 644 /home/pg_cron.control '/usr/local/share/postgresq
 RUN /usr/bin/install -c -m 644 /home/pg_cron--1.1--1.2.sql '/usr/local/share/postgresql/extension/'
 RUN /usr/bin/install -c -m 644 /home/pg_cron--1.0--1.1.sql '/usr/local/share/postgresql/extension/'
 RUN /usr/bin/install -c -m 644 /home/pg_cron--1.0.sql '/usr/local/share/postgresql/extension/'
+
+RUN rm /home/*
+
+# Copy the script which will initialize the replication permissions
+COPY /docker-entrypoint-initdb.d /docker-entrypoint-initdb.d
