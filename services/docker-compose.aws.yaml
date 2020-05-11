@@ -18,10 +18,14 @@ services:
     volumes:
       - static_volume:/public
     command:
-      - gunicorn
-      - wsgi:application
-      - --bind
-      - 0.0.0.0:8000
+      - uwsgi
+      - --http=0.0.0.0:8000
+      - --module=wsgi
+      - --master
+      - --check-static=/public
+      - --die-on-term
+      - --processes=1
+      - --threads=1
     expose:
       - 8000
   migrate:
