@@ -9,6 +9,9 @@ export GIT_REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 export AWS_ACCOUNT_ID ?= $(shell aws sts get-caller-identity --query Account --output text)
 export AWS_REGION ?= $(shell aws configure get region)
 
+# Change to your AWS IAM profile, set up as part of `aws-iam.yaml`.
+export AWS_PROFILE=tinydevcrm-user
+
 # Change to your AWS ECR app repository name, after configuring in
 # `aws-ecr.yaml` in this repository.
 export AWS_ECR_APP_REPOSITORY_NAME=tinydevcrm-ecr/app
