@@ -44,7 +44,7 @@ Parameters:
 
   ECSClusterName:
     Type: String
-    Default: tinydevcrm-ecs-cluster
+    Default: tinydevcrm-app
     Description: "Name of the ECS cluster, to be used consistently both here and in 'aws-ecs.yaml'."
 
   PublicSubnetAReference:
@@ -83,7 +83,7 @@ Resources:
   ApplicationLogGroup:
     Type: "AWS::Logs::LogGroup"
     Properties:
-      LogGroupName: !Sub "/${AWS::StackName}/ecs/tinydevcrm"
+      LogGroupName: !Sub "/${AWS::StackName}/ecs/tinydevcrm-app"
       RetentionInDays: 7
 
   ApplicationService:
@@ -162,7 +162,7 @@ Resources:
               awslogs-stream-prefix: docker
           MemoryReservation: 395
           MountPoints:
-            - ContainerPath: /home/app/web/staticfiles
+            - ContainerPath: /home/app/web
               SourceVolume: static_volume
           PortMappings:
             - ContainerPort: 8000
@@ -202,14 +202,14 @@ Resources:
               awslogs-stream-prefix: docker
           MemoryReservation: 5
           MountPoints:
-            - ContainerPath: /home/app/web/staticfiles
+            - ContainerPath: /home/app/web
               SourceVolume: static_volume
       Family: tinydevcrm-app
       NetworkMode: awsvpc
       Volumes:
         - Name: static_volume
           Host:
-            SourcePath: /data/home/app/web/staticfiles
+            SourcePath: /data/home/app/web
 
   ApplicationServiceTargetGroup:
     Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
@@ -235,6 +235,10 @@ Resources:
       LaunchConfigurationName: !Ref EC2LaunchConfiguration
       MaxSize: !Ref EC2MaximumCapacity
       MinSize: !Ref EC2MinimumCapacity
+      Tags:
+        - Key: Name
+          PropagateAtLaunch: "true"
+          Value: tinydevcrm-app-compute
       VPCZoneIdentifier:
         - "Fn::ImportValue": !Ref PublicSubnetAReference
         - "Fn::ImportValue": !Ref PublicSubnetBReference
