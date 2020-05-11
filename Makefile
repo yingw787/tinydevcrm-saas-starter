@@ -9,7 +9,7 @@ export GIT_REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 export AWS_ACCOUNT_ID ?= $(shell aws sts get-caller-identity --query Account --output text)
 export AWS_REGION ?= $(shell aws configure get region)
 
-# Change to your AWS IAM profile, set up as part of `aws-iam.yaml`.
+# Change to your AWS IAM profile, set up as part of `aws-iam.yaml`..
 export AWS_PROFILE=tinydevcrm-user
 
 # Change to your AWS ECR app repository name, after configuring in
@@ -25,22 +25,26 @@ version:
 
 # Local compute commands #
 
-config-aws:
+local-config:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml config
 
-run-aws-release:
-	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up --build --abort-on-container-exit migrate
-	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose run app python3 manage.py collectstatic --no-input
-	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up -d --build
-	sleep 5
-	xdg-open http://localhost:1337/admin
+local-up:
+	# docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up --build --abort-on-container-exit migrate
+	# docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose run app python3 manage.py collectstatic --no-input
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up -d --build db
+	# sleep 5
+	# xdg-open http://localhost:1337/admin
 
-create-superuser:
+local-down:
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml down -v
+	docker images -q -f dangling=true -f label=application=tinydevcrm | xargs -I ARGS docker rmi -f --no-prune ARGS
+
+local-createsuperuser:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml exec app python3 manage.py createsuperuser
 
 # Change PGPASSWORD, --username, and --db values to match those in
 # db/conf/.env.aws
-exec-psql:
+local-psql:
 	PGPASSWORD=tinydevcrm docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml exec db psql --username=tinydevcrm --db=tinydevcrm_api_prod
 
 publish-app: aws-login
@@ -63,10 +67,6 @@ publish-nginx: aws-login
 
 	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_NGINX_REPOSITORY_NAME}:latest -f ${GIT_REPO_ROOT}/services/nginx/aws.Dockerfile ${GIT_REPO_ROOT}/services/nginx
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_NGINX_REPOSITORY_NAME}:latest
-
-clean-aws:
-	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml down -v
-	docker images -q -f dangling=true -f label=application=tinydevcrm | xargs -I ARGS docker rmi -f --no-prune ARGS
 
 # AWS remote commands #
 
@@ -97,7 +97,7 @@ aws-db-create:
 aws-db-deploy:
 	aws cloudformation deploy --stack-name tinydevcrm-db --template-file db.yaml --capabilities CAPABILITY_NAMED_IAM
 
-aws-db-delete:
+aws-db-terminate:
 	aws cloudformation delete-stack --stack-name tinydevcrm-db
 
 # Conditioned on having a deployed database up and running.
