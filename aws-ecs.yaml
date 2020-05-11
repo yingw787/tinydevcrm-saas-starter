@@ -209,7 +209,7 @@ Resources:
       Volumes:
         - Name: static_volume
           Host:
-            SourcePath: /home/app/web/staticfiles
+            SourcePath: /data/home/app/web/staticfiles
 
   ApplicationServiceTargetGroup:
     Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
@@ -305,6 +305,7 @@ Resources:
                   - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
                   - "ecr:GetAuthorizationToken"
+                  - "ecr:BatchCheckLayerAvailability"
                   - "ecr:BatchGetImage"
                   - "ecr:GetDownloadUrlForLayer"
                 Resource: "*"
