@@ -29,11 +29,11 @@ local-config:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml config
 
 local-up:
-	# docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up --build --abort-on-container-exit migrate
-	# docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose run app python3 manage.py collectstatic --no-input
-	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up -d --build db
-	# sleep 5
-	# xdg-open http://localhost:1337/admin
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up --build --abort-on-container-exit migrate
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose run app python3 manage.py collectstatic --no-input
+	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml --verbose up -d --build
+	sleep 5
+	xdg-open http://localhost:1337/admin
 
 local-down:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml down -v
