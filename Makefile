@@ -87,7 +87,7 @@ aws-app-create: publish-app
 	aws cloudformation create-stack --stack-name tinydevcrm-app --template-body file://app.yaml --parameters file://app-params.json --capabilities CAPABILITY_NAMED_IAM
 
 aws-app-deploy:
-	aws cloudformation deploy --stack-name tinydevcrm-app --template-file aws-app.yaml --capabilities CAPABILITY_NAMED_IAM
+	aws cloudformation deploy --stack-name tinydevcrm-app --template-file app.yaml --capabilities CAPABILITY_NAMED_IAM
 
 aws-app-terminate:
 	aws cloudformation delete-stack --stack-name tinydevcrm-app
