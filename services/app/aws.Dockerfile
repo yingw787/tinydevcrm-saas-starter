@@ -77,10 +77,12 @@ COPY --from=builder --chown=app:app /usr/src/app/requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache /wheels/*
 
+# Build 'uwsgi': https://stackoverflow.com/a/46204015/1497211
+RUN apk add build-base python3-dev linux-headers pcre-dev
+RUN pip install uwsgi==2.0.17
+
 # Entrypoint
 COPY ./conf/entrypoint.aws.sh $APP_HOME
-RUN chmod +x ${APP_HOME}/entrypoint.aws.sh
-ENTRYPOINT [ "/home/app/web/entrypoint.aws.sh" ]
 
 # copy project
 COPY ./src $APP_HOME
@@ -90,3 +92,5 @@ RUN chown -R app:app $APP_HOME
 
 # change to the app user
 USER app
+
+ENTRYPOINT [ "/home/app/web/entrypoint.aws.sh" ]
