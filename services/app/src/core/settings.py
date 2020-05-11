@@ -211,8 +211,8 @@ CORS_ORIGIN_WHITELIST = [
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
-STATIC_URL = '/staticfiles/'
-STATIC_ROOT = os.path.join(
-    BASE_DIR,
-    "staticfiles"
+STATIC_URL = '/static/'
+STATIC_ROOT = os.environ.get(
+    'STATIC_ROOT',
+    '/public/static'
 )
