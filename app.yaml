@@ -20,7 +20,7 @@ Parameters:
 
   EC2HostAMI:
     Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
-    Default: /aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id
+    Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
     Description: ID for the ECS-optimized EC2 AMI, updated to Amazon Linux 2.
 
   EC2InstanceType:
@@ -41,11 +41,6 @@ Parameters:
     Type: Number
     Default: "1"
     Description: Minimum number of EC2 instances to launch in the EC2 cluster.
-
-  ECSClusterName:
-    Type: String
-    Default: tinydevcrm-app
-    Description: "Name of the ECS cluster, to be used consistently both here and in 'aws-ecs.yaml'."
 
   PublicSubnetAReference:
     Type: String
@@ -78,7 +73,7 @@ Resources:
       - EC2AutoScalingGroup
     Description: ECS cluster for deploying ECS task and service definitions.
     Properties:
-      ClusterName: !Sub ${ECSClusterName}
+      ClusterName: !Sub ${AWS::StackName}-ecs-cluster
 
   ApplicationLogGroup:
     Type: "AWS::Logs::LogGroup"
@@ -157,7 +152,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "/${AWS::StackName}/ecs/tinydevcrm"
+              awslogs-group: !Sub "/${AWS::StackName}/ecs/tinydevcrm-app"
               awslogs-region: !Ref "AWS::Region"
               awslogs-stream-prefix: docker
           MemoryReservation: 395
@@ -197,7 +192,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "/${AWS::StackName}/ecs/tinydevcrm"
+              awslogs-group: !Sub "/${AWS::StackName}/ecs/tinydevcrm-app"
               awslogs-region: !Ref "AWS::Region"
               awslogs-stream-prefix: docker
           MemoryReservation: 5
@@ -342,7 +337,7 @@ Resources:
       UserData: !Base64
         "Fn::Sub": |
           #!/bin/bash -xe
-          echo ECS_CLUSTER=${ECSClusterName} >> /etc/ecs/ecs.config
+          echo ECS_CLUSTER=${AWS::StackName}-ecs-cluster >> /etc/ecs/ecs.config
           yum install -y aws-cfn-bootstrap
           /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --region ${AWS::Region}
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2AutoScalingGroup --region ${AWS::Region}
