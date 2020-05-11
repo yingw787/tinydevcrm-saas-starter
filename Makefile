@@ -73,25 +73,25 @@ publish-nginx: aws-login
 aws-login:
 	$$(aws ecr get-login --no-include-email)
 
-aws-create-ecr:
+aws-ecr-create:
 	aws cloudformation create-stack --stack-name tinydevcrm-ecr --template-body file://aws-ecr.yaml --capabilities CAPABILITY_NAMED_IAM
 
-aws-deploy-ecr:
+aws-ecr-deploy:
 	aws cloudformation deploy --stack-name tinydevcrm-ecr --template-file aws-ecr.yaml --capabilities CAPABILITY_NAMED_IAM
 
-aws-delete-ecr:
+aws-ecr-terminate:
 	aws cloudformation delete-stack --stack-name tinydevcrm-ecr
 
-aws-create-ecs: publish-app publish-db
-	aws cloudformation create-stack --stack-name tinydevcrm-ecs --template-body file://aws-ecs.yaml --parameters file://aws-ecs-params.json --capabilities CAPABILITY_NAMED_IAM
+aws-app-create: publish-app
+	aws cloudformation create-stack --stack-name tinydevcrm-app --template-body file://app.yaml --parameters file://app-params.json --capabilities CAPABILITY_NAMED_IAM
 
-aws-deploy-ecs:
-	aws cloudformation deploy --stack-name tinydevcrm-ecs --template-file aws-ecs.yaml --capabilities CAPABILITY_NAMED_IAM
+aws-app-deploy:
+	aws cloudformation deploy --stack-name tinydevcrm-app --template-file aws-app.yaml --capabilities CAPABILITY_NAMED_IAM
 
-aws-delete-ecs:
-	aws cloudformation delete-stack --stack-name tinydevcrm-ecs
+aws-app-terminate:
+	aws cloudformation delete-stack --stack-name tinydevcrm-app
 
-aws-db-create:
+aws-db-create: publish-db
 	aws cloudformation create-stack --stack-name tinydevcrm-db --template-body file://db.yaml --parameters file://db-params.json --capabilities CAPABILITY_NAMED_IAM
 
 aws-db-deploy:

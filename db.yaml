@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: Database definition for the TinyDevCRM application.
+Description: Compute layer definition for the TinyDevCRM database.
 
 Parameters:
   DatabaseECRDockerImageTag:

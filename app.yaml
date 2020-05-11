@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: Compute layer definition for the TinyDevCRM application, w/ EC2 resources along with AWS Elastic Container Service (ECS) task and service definitions.
+Description: Compute layer definition for the TinyDevCRM application backend.
 
 Parameters:
   ApplicationDockerImageTag:
