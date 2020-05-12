@@ -216,3 +216,12 @@ STATIC_ROOT = os.environ.get(
     'STATIC_ROOT',
     '/public/static'
 )
+
+
+# Media files (CSV data dumps, PostgreSQL stored procedures, etc.)
+# https://docs.djangoproject.com/en/3.0/topics/files/
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.environ.get(
+    'MEDIA_ROOT',
+    '/public/media'
+)
