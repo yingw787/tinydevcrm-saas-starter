@@ -92,6 +92,15 @@ aws-app-deploy:
 aws-app-terminate:
 	aws cloudformation delete-stack --stack-name tinydevcrm-app
 
+aws-persist-create:
+	aws cloudformation create-stack --stack-name tinydevcrm-persist --template-body file://persist.yaml --capabilities CAPABILITY_NAMED_IAM
+
+aws-persist-deploy:
+	aws cloudformation deploy --stack-name tinydevcrm-persist --template-file persist.yaml --capabilities CAPABILITY_NAMED_IAM
+
+aws-persist-terminate:
+	aws cloudformation delete-stack --stack-name tinydevcrm-persist
+
 aws-db-create: publish-db
 	aws cloudformation create-stack --stack-name tinydevcrm-db --template-body file://db.yaml --parameters file://db-params.json --capabilities CAPABILITY_NAMED_IAM
 
@@ -101,6 +110,7 @@ aws-db-deploy:
 aws-db-terminate:
 	aws cloudformation delete-stack --stack-name tinydevcrm-db
 
-# Conditioned on having a deployed database up and running.
+# Conditioned on having a deployed database up and running. # Credentials part
+# of `db.yaml`.
 aws-psql:
-	PGPASSWORD=my-secret-pw psql -U postgres -h $(AWS_NLB_DNS_NAME) -d postgres
+	PGPASSWORD=tinydevcrm psql -U tinydevcrm -h $(AWS_NLB_DNS_NAME) -d tinydevcrm-api-prod
