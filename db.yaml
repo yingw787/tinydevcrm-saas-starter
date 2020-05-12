@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: Compute layer definition for the TinyDevCRM database.
+Description: Compute layer definition for the TinyDevCRM database. CloudFormation stack 'data.yaml' MUST be deployed before 'db.yaml' is deployed in order to stand up the stack correctly!
 
 Parameters:
   DatabaseECRDockerImageTag:
@@ -55,6 +55,35 @@ Parameters:
     Type: String
     Default: t2.medium
     Description: EC2 host instance type.
+
+  EC2MinimumCapacity:
+    Type: Number
+    Default: "1"
+    Description: Minimum number of EC2 instances to launch in the EC2 cluster.
+
+  EC2MaximumCapacity:
+    Type: Number
+    Default: "2"
+    Description: Maximum number of EC2 instances to launch in the EC2 cluster.
+
+  EC2DesiredCapacity:
+    Type: Number
+    Default: "1"
+    Description: Average number of EC2 instances to launch in the EC2 cluster.
+
+  EnvVarPostgresDatabase:
+    Type: String
+    Default: "tinydevcrm-api-prod"
+    Description: Environment variable 'POSTGRES_DB'.
+
+  EnvVarPostgresUser:
+    Type: String
+    Default: "tinydevcrm"
+    Description: Environment variable 'POSTGRES_USER'.
+
+  EnvVarPostgresPassword:
+    Type: String
+    Description: Environment variable 'POSTGRES_PASSWORD'.
 
 Resources:
   DatabaseEC2AutoScalingRole:
@@ -207,19 +236,6 @@ Resources:
       VpcId: !ImportValue
         Ref: VPCReference
 
-  DatabaseEBSVolume:
-    Type: AWS::EC2::Volume
-    Description: The persist layer for the PostgreSQL database. TODO ATTENTION This can be eventually separated out into a separate CloudFormation stack in order to manage lifecycles separately.
-    Properties:
-      Size: 1
-      AvailabilityZone: !Select
-        - 0
-        - "Fn::GetAZs": ""
-      VolumeType: gp2
-      Tags:
-        - Key: Name
-          Value: rexray-vol
-
   DatabaseEC2LaunchConfiguration:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Description: TODO UPDATE AFTER I FIGURE OUT HOW THE ENTIRE DATABASE WORKS
@@ -274,10 +290,10 @@ Resources:
         - "Fn::Select":
             - "0"
             - "Fn::GetAZs": !Ref "AWS::Region"
-      DesiredCapacity: "2"
+      DesiredCapacity: !Ref EC2DesiredCapacity
       LaunchConfigurationName: !Ref DatabaseEC2LaunchConfiguration
-      MaxSize: "2"
-      MinSize: "2"
+      MaxSize: !Ref EC2MaximumCapacity
+      MinSize: !Ref EC2MinimumCapacity
       Tags:
         - Key: Name
           PropagateAtLaunch: "true"
@@ -300,8 +316,6 @@ Resources:
   DatabaseECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Description: TODO ATTENTION
-    DependsOn:
-      - DatabaseEBSVolume
     Properties:
       ContainerDefinitions:
         - LogConfiguration:
@@ -315,24 +329,34 @@ Resources:
               Protocol: tcp
           Environment:
             - Name: POSTGRES_PASSWORD
-              Value: my-secret-pw
+              Value: !Ref EnvVarPostgresPassword
+            - Name: POSTGRES_USER
+              Value: !Ref EnvVarPostgresUser
+            - Name: POSTGRES_DB
+              Value: !Ref EnvVarPostgresDatabase
+            - Name: PGUSER
+              Value: !Ref EnvVarPostgresUser
+            - Name: PGPASSWORD
+              Value: !Ref EnvVarPostgresPassword
+            - Name: PGDATABASE
+              Value: !Ref EnvVarPostgresDatabase
           MountPoints:
             - ContainerPath: /var/lib/postgresql/data
-              SourceVolume: rexray-vol
+              SourceVolume: tinydevcrm-db-ebs
           Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${DatabaseECRRepositoryName}:${DatabaseECRDockerImageTag}"
           Essential: true
-          Name: postgres
+          Name: tinydevcrm-db-container
       PlacementConstraints:
         - Type: memberOf
           Expression: attribute:ecs.availability-zone==us-east-1a
       Memory: '512'
-      Family: postgres
+      Family: tinydevcrm-db-family
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - EC2
       Cpu: '512'
       Volumes:
-        - Name: rexray-vol
+        - Name: tinydevcrm-db-ebs
           DockerVolumeConfiguration:
             Autoprovision: true
             Scope: shared
@@ -348,18 +372,18 @@ Resources:
       - DatabaseNLBListener
     Properties:
       Cluster: !Ref DatabaseECSCluster
-      ServiceName: postgres-svc
+      ServiceName: tinydevcrm-db-service
       TaskDefinition: !Ref DatabaseECSTaskDefinition
       LoadBalancers:
         - TargetGroupArn: !Ref DatabaseNLBTargetGroup
-          ContainerName: postgres
+          ContainerName: tinydevcrm-db-container
           ContainerPort: 5432
       DesiredCount: 1
       LaunchType: EC2
       HealthCheckGracePeriodSeconds: 60
       DeploymentConfiguration:
-        MaximumPercent: 100
-        MinimumHealthyPercent: 0
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
       NetworkConfiguration:
         AwsvpcConfiguration:
           Subnets:
