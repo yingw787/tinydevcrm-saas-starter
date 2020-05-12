@@ -17,12 +17,14 @@ services:
       - db
     volumes:
       - static_volume:/public
+      - media_volume:/tinydevcrm-files
     command:
       - uwsgi
       - --http=0.0.0.0:8000
       - --module=wsgi
       - --master
       - --check-static=/public
+      - --check-static=/tinydevcrm-files
       - --die-on-term
       - --processes=1
       - --threads=1
@@ -55,6 +57,7 @@ services:
       dockerfile: aws.Dockerfile
     volumes:
       - static_volume:/public
+      - media_volume:/tinydevcrm-files
     depends_on:
       - app
     ports:
@@ -63,3 +66,4 @@ services:
 volumes:
   postgres_data:
   static_volume:
+  media_volume:

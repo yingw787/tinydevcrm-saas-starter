@@ -223,5 +223,5 @@ STATIC_ROOT = os.environ.get(
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.environ.get(
     'MEDIA_ROOT',
-    '/public/media'
+    '/tinydevcrm-files/media'
 )

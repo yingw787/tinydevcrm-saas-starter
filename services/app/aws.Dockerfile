@@ -70,6 +70,10 @@ RUN mkdir /public
 RUN chown app:app /public
 VOLUME /public
 
+RUN mkdir /tinydevcrm-files
+RUN chown app:app /tinydevcrm-files
+VOLUME /tinydevcrm-files
+
 # install dependencies
 RUN apk update && apk add libpq
 COPY --from=builder --chown=app:app /usr/src/app/wheels /wheels
