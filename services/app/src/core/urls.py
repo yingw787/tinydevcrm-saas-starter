@@ -20,6 +20,8 @@ https://www.django-rest-framework.org/api-guide/versioning/#namespaceversioning
 
 import os
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include
 from django.urls import path
@@ -74,3 +76,10 @@ urlpatterns = [
         name='rootdummy'
     ),
 ]
+
+# Make sure that data files are served in Django setting mode DEBUG.
+if settings.DEBUG:
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT
+    )
