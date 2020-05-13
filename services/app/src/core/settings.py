@@ -220,8 +220,9 @@ STATIC_ROOT = os.environ.get(
 
 # Media files (CSV data dumps, PostgreSQL stored procedures, etc.)
 # https://docs.djangoproject.com/en/3.0/topics/files/
-MEDIA_URL = '/media/'
+# https://learndjango.com/tutorials/django-file-and-image-uploads-tutorial
+MEDIA_URL = '/files/'
 MEDIA_ROOT = os.environ.get(
     'MEDIA_ROOT',
-    '/tinydevcrm-files/media'
+    '/tinydevcrm-files'
 )
