@@ -13,3 +13,18 @@ ACCESS=$(echo $RESPONSE | jq -r ".access")
 
 echo "Refresh is: " $REFRESH
 echo "Access is: " $ACCESS
+
+# Upload a CSV file.
+
+# Save CSV file to postgres.
+
+# Create materialized view.
+
+# Refresh materialized view.
+
+# Create materialized view refreshes table to store job scheduler events.
+
+# Register materialized view with 'pg_cron' and insert materialized view into
+# refreshes table (good to separate out whether or not a refresh is active)
+
+# Issue event on pub/sub upon insert into_table refresh view event.
