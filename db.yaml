@@ -358,7 +358,7 @@ Resources:
       Volumes:
         - Name: tinydevcrm-db-ebs
           DockerVolumeConfiguration:
-            Autoprovision: true
+            Autoprovision: false
             Scope: shared
             Driver: rexray/ebs
             DriverOpts:
