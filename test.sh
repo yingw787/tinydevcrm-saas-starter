@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Register a new test user.
-curl --header "Content-Type: application/json" -X POST http://localhost:1337/v1/auth/users/register/ --data '{"primary_email": "me@yingw787.com", "password": "test1234"}' || true
+curl --header "Content-Type: application/json" -X POST http://localhost:8000/v1/auth/users/register/ --data '{"primary_email": "me@yingw787.com", "password": "test1234"}' || true
 
 # Obtain a JSON web token.
-RESPONSE=$(curl --header "Content-Type: application/json" -X POST http://localhost:1337/v1/auth/tokens/obtain/ --data '{"primary_email": "me@yingw787.com", "password": "test1234"}')
+RESPONSE=$(curl --header "Content-Type: application/json" -X POST http://localhost:8000/v1/auth/tokens/obtain/ --data '{"primary_email": "me@yingw787.com", "password": "test1234"}')
 
 echo "Response is: " $RESPONSE
 
@@ -15,8 +15,10 @@ echo "Refresh is: " $REFRESH
 echo "Access is: " $ACCESS
 
 # Upload a CSV file.
+curl --header "Content-Type: application/json" --header "Authorization: JWT $ACCESS" -X GET http://localhost:8000/v1/data/test/
 
 # Save CSV file to postgres.
+curl --header "Content-Type: multipart/form-data" --header "Authorization: JWT $ACCESS" -X POST  -F file=@sample.csv http://localhost:8000/v1/data/upload/
 
 # Create materialized view.
 
