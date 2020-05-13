@@ -11,9 +11,8 @@ export GIT_REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 # ipdb` will hook within `settings.py` and cause the container to fail to start.
 run-dev:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.development.yaml --verbose up -d --build db
+	@echo "Open http://localhost:8000 to see results."
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.development.yaml --verbose run --service-ports web
-	sleep 5
-	xdg-open http://localhost:8000/admin
 
 run-prod:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.production.yaml --verbose up -d --build
