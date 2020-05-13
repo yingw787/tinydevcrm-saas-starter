@@ -41,9 +41,6 @@ local-down:
 	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml down -v
 	docker images -q -f dangling=true -f label=application=tinydevcrm | xargs -I ARGS docker rmi -f --no-prune ARGS
 
-local-createsuperuser:
-	docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml exec app python3 manage.py createsuperuser
-
 # Change PGPASSWORD, --username, and --db values to match those in
 # db/conf/.env.aws
 local-psql:
