@@ -73,13 +73,26 @@ Resources:
       - EC2AutoScalingGroup
     Description: ECS cluster for deploying ECS task and service definitions.
     Properties:
-      ClusterName: !Sub ${AWS::StackName}-ecs-cluster
+      ClusterName: !Sub "${AWS::StackName}-ecs-cluster"
 
   ApplicationLogGroup:
     Type: "AWS::Logs::LogGroup"
     Properties:
       LogGroupName: !Sub "/${AWS::StackName}/ecs/tinydevcrm-app"
       RetentionInDays: 7
+
+  ApplicationSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: !Sub "${AWS::StackName} Application Security Group"
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: -1
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: -1
+      VpcId: !ImportValue
+        Ref: VPCReference
 
   ApplicationService:
     Type: "AWS::ECS::Service"
@@ -91,32 +104,32 @@ Resources:
       DeploymentConfiguration:
         MaximumPercent: 200
         MinimumHealthyPercent: 100
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          SecurityGroups:
-            - !Ref ApplicationSecurityGroup
-          Subnets:
-            - "Fn::ImportValue": !Ref PublicSubnetAReference
-            - "Fn::ImportValue": !Ref PublicSubnetBReference
       DesiredCount: !Ref EC2DesiredCapacity
       LoadBalancers:
         - ContainerName: tinydevcrm-app
           ContainerPort: 8000
           TargetGroupArn: !Ref ApplicationServiceTargetGroup
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - Ref: ApplicationSecurityGroup
+          Subnets:
+            - "Fn::ImportValue": !Ref PublicSubnetAReference
+            - "Fn::ImportValue": !Ref PublicSubnetBReference
       TaskDefinition: !Ref ApplicationTaskDefinition
 
-  ApplicationSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+  ApplicationServiceTargetGroup:
+    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+    Description: A dummy target group is used to set up the application load balncer to just drop network traffic initially, before any real service target groups have been added.
     Properties:
-      GroupDescription: !Sub ${AWS::StackName} Application Security Group
+      Port: 8000
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 30
+      TargetType: ip
       VpcId: !ImportValue
         Ref: VPCReference
-      SecurityGroupEgress:
-        - CidrIp: "0.0.0.0/0"
-          IpProtocol: -1
-      SecurityGroupIngress:
-        - CidrIp: "0.0.0.0/0"
-          IpProtocol: -1
 
   ApplicationTaskDefinition:
     Type: "AWS::ECS::TaskDefinition"
@@ -125,17 +138,17 @@ Resources:
         - Name: tinydevcrm-app
           Command:
             - uwsgi
-            - --http=0.0.0.0:8000
-            - --module=wsgi
-            - --master
-            - --check-static=/public
-            - --die-on-term
-            - --processes=1
-            - --threads=1
+            - "--http=0.0.0.0:8000"
+            - "--module=wsgi"
+            - "--master"
+            - "--check-static=/public"
+            - "--die-on-term"
+            - "--processes=1"
+            - "--threads=1"
           Cpu: 245
           Environment:
             - Name: DEBUG
-              Value: '1'
+              Value: "1"
             - Name: SECRET_KEY
               Value: change_me
             - Name: DJANGO_ALLOWED_HOSTS
@@ -174,11 +187,11 @@ Resources:
           Cpu: 5
           Environment:
             - Name: DEBUG
-              Value: '1'
+              Value: "1"
             - Name: SECRET_KEY
               Value: change_me
             - Name: DJANGO_ALLOWED_HOSTS
-              Value: '*'
+              Value: "*"
             - Name: SQL_ENGINE
               Value: django.db.backends.sqlite3
             - Name: SQL_DATABASE
@@ -209,19 +222,6 @@ Resources:
         - Name: public
           Host:
             SourcePath: /data/public
-
-  ApplicationServiceTargetGroup:
-    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
-    Description: A dummy target group is used to set up the application load balncer to just drop network traffic initially, before any real service target groups have been added.
-    Properties:
-      Port: 8000
-      Protocol: HTTP
-      TargetType: ip
-      TargetGroupAttributes:
-        - Key: deregistration_delay.timeout_seconds
-          Value: 30
-      VpcId: !ImportValue
-        Ref: VPCReference
 
   EC2AutoScalingGroup:
     Type: "AWS::AutoScaling::AutoScalingGroup"
@@ -324,13 +324,13 @@ Resources:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Description: Launch configuration for EC2 instances acting as ECS hosts.
     Metadata:
-      AWS::CloudFormation::Init:
+      "AWS::CloudFormation::Init":
         config:
           commands:
-            01_volume_public:
+            "01_volume_public":
               command: mkdir -p /data/public
-            02_volume_public_permissions:
-              command: chown -R 1000:1000 /data/public
+            "02_volume_public_permissions":
+              command: "chown -R 1000:1000 /data/public"
     Properties:
       IamInstanceProfile: !Ref EC2InstanceProfile
       ImageId: !Ref EC2HostAMI
