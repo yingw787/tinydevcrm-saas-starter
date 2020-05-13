@@ -5,7 +5,7 @@ services:
         build:
             context: ./app
             dockerfile: development.Dockerfile
-        command: python manage.py runserver 0.0.0.0:8000
+        command: python -m ipdb manage.py runserver 0.0.0.0:8000
         volumes:
             - ./app/src/:/usr/src/app/
         ports:
@@ -15,6 +15,8 @@ services:
             - ./app/conf/.env.dev
         depends_on:
             - db
+        stdin_open: true
+        tty: true
     db:
         build:
             context: ./db
