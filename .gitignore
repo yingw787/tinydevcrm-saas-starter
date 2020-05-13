@@ -1,3 +1,6 @@
+# Development.
+.vscode/
+
 # Configuration files.
 services/app/conf/.env.dev
 services/db/conf/.env.dev
