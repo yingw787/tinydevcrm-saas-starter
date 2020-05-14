@@ -106,5 +106,5 @@ aws-db-terminate:
 # In order to set env variables within the same target, add env to target:
 # https://stackoverflow.com/a/15230658/1497211
 aws-psql: AWS_NLB_DNS_NAME=$(shell aws cloudformation describe-stacks --stack-name tinydevcrm-db --query "Stacks[0].Outputs[?OutputKey=='DatabaseNLBDNSName'].OutputValue" --output text)
-aws-psql: env-echo
+aws-psql:
 	PGPASSWORD=tinydevcrm psql -U tinydevcrm -h $(AWS_NLB_DNS_NAME) -d tinydevcrm-api-prod
