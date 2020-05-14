@@ -6,6 +6,12 @@ export GIT_REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 # Change to your AWS IAM profile, set up as part of `aws-iam.yaml`..
 export AWS_PROFILE=tinydevcrm-user
 
+export AWS_ACCOUNT_ID ?= $(shell aws sts get-caller-identity --query Account --output text)
+export AWS_REGION ?= $(shell aws configure get region)
+export AWS_ECR_APP_REPOSITORY_NAME=tinydevcrm-ecr/app
+export AWS_ECR_DB_REPOSITORY_NAME=tinydevcrm-ecr/db
+export AWS_ECR_NGINX_REPOSITORY_NAME=tinydevcrm-ecr/nginx
+
 version:
 	@ echo '{"Version": "$(APP_VERSION)"}'
 
@@ -32,9 +38,6 @@ local-down:
 local-psql:
 	PGPASSWORD=tinydevcrm docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml exec db psql --username=tinydevcrm --db=tinydevcrm_api_prod
 
-publish-app: AWS_ACCOUNT_ID=$(shell aws sts get-caller-identity --query Account --output text)
-publish-app: AWS_REGION=$(shell aws configure get region)
-publish-app: AWS_ECR_APP_REPOSITORY_NAME=tinydevcrm-ecr/app
 publish-app: aws-login
 	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:${APP_VERSION} -f ${GIT_REPO_ROOT}/services/app/aws.Dockerfile ${GIT_REPO_ROOT}/services/app
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:${APP_VERSION}
@@ -42,9 +45,6 @@ publish-app: aws-login
 	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:latest -f ${GIT_REPO_ROOT}/services/app/aws.Dockerfile ${GIT_REPO_ROOT}/services/app
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:latest
 
-publish-db: publish-app: AWS_ACCOUNT_ID=$(shell aws sts get-caller-identity --query Account --output text)
-publish-db: AWS_REGION=$(shell aws configure get region)
-publish-db: AWS_ECR_DB_REPOSITORY_NAME=tinydevcrm-ecr/db
 publish-db: aws-login
 	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_DB_REPOSITORY_NAME}:${APP_VERSION} -f ${GIT_REPO_ROOT}/services/db/Dockerfile ${GIT_REPO_ROOT}/services/db
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_DB_REPOSITORY_NAME}:${APP_VERSION}
@@ -52,9 +52,6 @@ publish-db: aws-login
 	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_DB_REPOSITORY_NAME}:latest -f ${GIT_REPO_ROOT}/services/db/Dockerfile ${GIT_REPO_ROOT}/services/db
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_DB_REPOSITORY_NAME}:latest
 
-publish-nginx: AWS_ACCOUNT_ID=$(shell aws sts get-caller-identity --query Account --output text)
-publish-nginx: AWS_REGION=$(shell aws configure get region)
-publish-nginx: AWS_ECR_NGINX_REPOSITORY_NAME=tinydevcrm-ecr/nginx
 publish-nginx: aws-login
 	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_NGINX_REPOSITORY_NAME}:${APP_VERSION} -f ${GIT_REPO_ROOT}/services/nginx/aws.Dockerfile ${GIT_REPO_ROOT}/services/nginx
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_NGINX_REPOSITORY_NAME}:${APP_VERSION}
