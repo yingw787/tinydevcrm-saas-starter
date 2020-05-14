@@ -3,22 +3,8 @@
 export APP_VERSION ?= $(shell git rev-parse --short HEAD)
 export GIT_REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
-# In order to run these commands, make sure that `tinydevcrm-infra` is set up
-# and `awscli` is installed, and `aws configure` is properly run according to
-# `SETUP.md`.
-export AWS_ACCOUNT_ID ?= $(shell aws sts get-caller-identity --query Account --output text)
-export AWS_REGION ?= $(shell aws configure get region)
-
 # Change to your AWS IAM profile, set up as part of `aws-iam.yaml`..
 export AWS_PROFILE=tinydevcrm-user
-
-# Change to your AWS ECR app repository name, after configuring in
-# `aws-ecr.yaml` in this repository.
-export AWS_ECR_APP_REPOSITORY_NAME=tinydevcrm-ecr/app
-export AWS_ECR_DB_REPOSITORY_NAME=tinydevcrm-ecr/db
-export AWS_ECR_NGINX_REPOSITORY_NAME=tinydevcrm-ecr/nginx
-
-export AWS_NLB_DNS_NAME ?= $(shell aws cloudformation describe-stacks --stack-name tinydevcrm-db --query "Stacks[0].Outputs[?OutputKey=='DatabaseNLBDNSName'].OutputValue" --output text)
 
 version:
 	@ echo '{"Version": "$(APP_VERSION)"}'
@@ -46,6 +32,9 @@ local-down:
 local-psql:
 	PGPASSWORD=tinydevcrm docker-compose -f ${GIT_REPO_ROOT}/services/docker-compose.aws.yaml exec db psql --username=tinydevcrm --db=tinydevcrm_api_prod
 
+publish-app: AWS_ACCOUNT_ID=$(shell aws sts get-caller-identity --query Account --output text)
+publish-app: AWS_REGION=$(shell aws configure get region)
+publish-app: AWS_ECR_APP_REPOSITORY_NAME=tinydevcrm-ecr/app
 publish-app: aws-login
 	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:${APP_VERSION} -f ${GIT_REPO_ROOT}/services/app/aws.Dockerfile ${GIT_REPO_ROOT}/services/app
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:${APP_VERSION}
@@ -53,6 +42,9 @@ publish-app: aws-login
 	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:latest -f ${GIT_REPO_ROOT}/services/app/aws.Dockerfile ${GIT_REPO_ROOT}/services/app
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_APP_REPOSITORY_NAME}:latest
 
+publish-db: publish-app: AWS_ACCOUNT_ID=$(shell aws sts get-caller-identity --query Account --output text)
+publish-db: AWS_REGION=$(shell aws configure get region)
+publish-db: AWS_ECR_DB_REPOSITORY_NAME=tinydevcrm-ecr/db
 publish-db: aws-login
 	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_DB_REPOSITORY_NAME}:${APP_VERSION} -f ${GIT_REPO_ROOT}/services/db/Dockerfile ${GIT_REPO_ROOT}/services/db
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_DB_REPOSITORY_NAME}:${APP_VERSION}
@@ -60,6 +52,9 @@ publish-db: aws-login
 	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_DB_REPOSITORY_NAME}:latest -f ${GIT_REPO_ROOT}/services/db/Dockerfile ${GIT_REPO_ROOT}/services/db
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_DB_REPOSITORY_NAME}:latest
 
+publish-nginx: AWS_ACCOUNT_ID=$(shell aws sts get-caller-identity --query Account --output text)
+publish-nginx: AWS_REGION=$(shell aws configure get region)
+publish-nginx: AWS_ECR_NGINX_REPOSITORY_NAME=tinydevcrm-ecr/nginx
 publish-nginx: aws-login
 	docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_NGINX_REPOSITORY_NAME}:${APP_VERSION} -f ${GIT_REPO_ROOT}/services/nginx/aws.Dockerfile ${GIT_REPO_ROOT}/services/nginx
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_ECR_NGINX_REPOSITORY_NAME}:${APP_VERSION}
@@ -110,5 +105,9 @@ aws-db-terminate:
 
 # Conditioned on having a deployed database up and running. # Credentials part
 # of `db.yaml`.
-aws-psql:
+#
+# In order to set env variables within the same target, add env to target:
+# https://stackoverflow.com/a/15230658/1497211
+aws-psql: AWS_NLB_DNS_NAME=$(shell aws cloudformation describe-stacks --stack-name tinydevcrm-db --query "Stacks[0].Outputs[?OutputKey=='DatabaseNLBDNSName'].OutputValue" --output text)
+aws-psql: env-echo
 	PGPASSWORD=tinydevcrm psql -U tinydevcrm -h $(AWS_NLB_DNS_NAME) -d tinydevcrm-api-prod
