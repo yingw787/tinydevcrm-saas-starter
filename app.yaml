@@ -159,6 +159,7 @@ Resources:
             - "--module=wsgi"
             - "--master"
             - "--check-static=/public"
+            - "--check-static=/tinydevcrm-files"
             - "--die-on-term"
             - "--processes=1"
             - "--threads=1"
