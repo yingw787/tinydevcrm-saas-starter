@@ -78,7 +78,7 @@ Resources:
       - EC2AutoScalingGroup
     Description: ECS cluster for deploying ECS task and service definitions.
     Properties:
-      ClusterName: !Sub "${AWS::StackName}-ecs-cluster"
+      ClusterName: !Sub "${AWS::StackName}"
 
   ApplicationLogGroup:
     Type: "AWS::Logs::LogGroup"
@@ -334,25 +334,72 @@ Resources:
     Metadata:
       "AWS::CloudFormation::Init":
         config:
+          packages:
+            yum:
+              aws-cli: []
+              jq: []
+              ecs-init: []
+              nfs-utils: []
           commands:
             "01_volume_public":
               command: mkdir -p /data/public
             "02_volume_public_permissions":
               command: "chown -R 1000:1000 /data/public"
+            "03_add_instance_to_cluster":
+              command: !Sub "echo ECS_CLUSTER=${AWS::StackName} >> /etc/ecs/ecs.config"
+            "04_start_ecs":
+              command: "start ecs"
+          files:
+            "/etc/cfn/cfn-hup.conf":
+              mode: 256
+              owner: root
+              group: root
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+            "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.EC2LaunchConfiguration.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource EC2LaunchConfiguration
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: "true"
+                ensureRunning: "true"
+                files:
+                  - "/etc/cfn/cfn-hup.conf"
+                  - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
     Properties:
       IamInstanceProfile: !Ref EC2InstanceProfile
       ImageId: !Ref EC2HostAMI
       InstanceType: !Ref EC2InstanceType
       KeyName: !Ref EC2KeyName
       SecurityGroups:
+        - Ref: ApplicationFileStoreSecurityGroup
         - Ref: EC2HostSecurityGroup
       UserData: !Base64
         "Fn::Sub": |
           #!/bin/bash -xe
-          echo ECS_CLUSTER=${AWS::StackName}-ecs-cluster >> /etc/ecs/ecs.config
+          yum install -y amazon-efs-utils
+          yum install -y nfs-utils
           yum install -y aws-cfn-bootstrap
           /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --region ${AWS::Region}
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2AutoScalingGroup --region ${AWS::Region}
+          # Open file descriptor for stderr
+          exec 2>>/var/log/ecs/ecs-agent-install.log
+          # Verify that the ECS agent is running
+          until curl -s http://localhost:51678/v1/metadata
+          do
+          sleep 1
+          done
+          # Install the Docker volume plugin to support EFS
+          docker plugin install rexray/efs REXRAY_PREEMPT=true EFS_REGION=${AWS::Region} EFS_SECURITYGROUPS=${ApplicationFileStoreSecurityGroup} --grant-all-permissions
+          # Restart the ECS agent
+          stop ecs
+          start ecs
 
   EC2SecurityGroupIngressFromPublicALB:
     Type: "AWS::EC2::SecurityGroupIngress"
