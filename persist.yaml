@@ -17,7 +17,8 @@ Resources:
 
   ApplicationFileStore:
     Type: "AWS::EFS::FileSystem"
+    Description: NOTE that the name of the application file store has to be pre-pended with a '/' character if the rex-ray efs driver is to discover the NFS drive properly with autoprovisioning turned off. Otherwise, the ECS service will hang and fail silently, with logs available in the ECS task definition only.
     Properties:
       FileSystemTags:
         - Key: Name
-          Value: tinydevcrm-app-efs
+          Value: /tinydevcrm-app-efs
