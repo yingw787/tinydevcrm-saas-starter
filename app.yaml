@@ -80,6 +80,24 @@ Resources:
     Properties:
       ClusterName: !Sub "${AWS::StackName}"
 
+  ApplicationFileStoreSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for accessing AWS EFS resources that serve TinyDevCRM media files.
+      VpcId: !ImportValue
+        Ref: VPCReference
+
+  ApplicationFileStoreSecurityGroupIngressFromTCP:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    Properties:
+      CidrIp: !ImportValue
+        Ref: VPCCIDRReference
+      Description: Enable AWS EFS access via port 2049.
+      FromPort: "2049"
+      GroupId: !Ref ApplicationFileStoreSecurityGroup
+      IpProtocol: tcp
+      ToPort: "2049"
+
   ApplicationLogGroup:
     Type: "AWS::Logs::LogGroup"
     Properties:
@@ -242,16 +260,16 @@ Resources:
         - "Fn::ImportValue": !Ref PublicSubnetBReference
     UpdatePolicy:
       AutoScalingRollingUpdate:
-        MinInstancesInService: !Ref EC2MinimumCapacity
         MaxBatchSize: !Ref EC2MaximumCapacity
+        MinInstancesInService: !Ref EC2MinimumCapacity
         PauseTime: PT5M
-        WaitOnResourceSignals: "true"
         SuspendProcesses:
           - HealthCheck
           - ReplaceUnhealthy
           - AZRebalance
           - AlarmNotification
           - ScheduledActions
+        WaitOnResourceSignals: "true"
 
   EC2AutoscalingRole:
     Type: "AWS::IAM::Role"
@@ -299,71 +317,71 @@ Resources:
                 - ec2.amazonaws.com
             Action:
               - "sts:AssumeRole"
-      Path: /
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-        - arn:aws:iam::aws:policy/AmazonElasticFileSystemFullAccess
+        - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+        - "arn:aws:iam::aws:policy/AmazonElasticFileSystemFullAccess"
+      Path: /
       Policies:
-      - PolicyName: ecs-service
-        PolicyDocument:
-          Statement:
-            - Effect: Allow
-              Action:
-                - "ecs:CreateCluster"
-                - "ecs:DeregisterContainerInstance"
-                - "ecs:DiscoverPollEndpoint"
-                - "ecs:Poll"
-                - "ecs:RegisterContainerInstance"
-                - "ecs:StartTelemetrySession"
-                - "ecs:Submit*"
-                - "logs:CreateLogStream"
-                - "logs:PutLogEvents"
-                - "ecr:GetAuthorizationToken"
-                - "ecr:BatchCheckLayerAvailability"
-                - "ecr:BatchGetImage"
-                - "ecr:GetDownloadUrlForLayer"
-              Resource: "*"
-      - PolicyName: ec2-service
-        PolicyDocument:
-          Statement:
-            - Effect: Allow
-              Action:
-                - "ec2:AttachVolume"
-                - "ec2:CreateVolume"
-                - "ec2:CreateSnapshot"
-                - "ec2:CreateTags"
-                - "ec2:DeleteVolume"
-                - "ec2:DeleteSnapshot"
-                - "ec2:DescribeAvailabilityZones"
-                - "ec2:DescribeInstances"
-                - "ec2:DescribeVolumes"
-                - "ec2:DescribeVolumeAttribute"
-                - "ec2:DescribeVolumeStatus"
-                - "ec2:DescribeSnapshots"
-                - "ec2:CopySnapshot"
-                - "ec2:DescribeSnapshotAttribute"
-                - "ec2:DetachVolume"
-                - "ec2:ModifySnapshotAttribute"
-                - "ec2:ModifyVolumeAttribute"
-                - "ec2:DescribeTags"
-              Resource: "*"
-      - PolicyName: efs-service
-        PolicyDocument:
-          Statement:
-            - Effect: Allow
-              Action:
-                - "elasticfilesystem:CreateFileSystem"
-                - "elasticfilesystem:CreateMountTarget"
-                - "ec2:DescribeSubnets"
-                - "ec2:DescribeNetworkInterfaces"
-                - "ec2:CreateNetworkInterface"
-                - "elasticfilesystem:CreateTags"
-                - "elasticfilesystem:DeleteFileSystem"
-                - "elasticfilesystem:DeleteMountTarget"
-                - "ec2:DeleteNetworkInterface"
-                - "elasticfilesystem:DescribeFileSystems"
-                - "elasticfilesystem:DescribeMountTargets"
-              Resource: "*"
+        - PolicyName: ecs-service
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ecs:CreateCluster"
+                  - "ecs:DeregisterContainerInstance"
+                  - "ecs:DiscoverPollEndpoint"
+                  - "ecs:Poll"
+                  - "ecs:RegisterContainerInstance"
+                  - "ecs:StartTelemetrySession"
+                  - "ecs:Submit*"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                  - "ecr:GetAuthorizationToken"
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:BatchGetImage"
+                  - "ecr:GetDownloadUrlForLayer"
+                Resource: "*"
+        - PolicyName: ec2-service
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ec2:AttachVolume"
+                  - "ec2:CreateVolume"
+                  - "ec2:CreateSnapshot"
+                  - "ec2:CreateTags"
+                  - "ec2:DeleteVolume"
+                  - "ec2:DeleteSnapshot"
+                  - "ec2:DescribeAvailabilityZones"
+                  - "ec2:DescribeInstances"
+                  - "ec2:DescribeVolumes"
+                  - "ec2:DescribeVolumeAttribute"
+                  - "ec2:DescribeVolumeStatus"
+                  - "ec2:DescribeSnapshots"
+                  - "ec2:CopySnapshot"
+                  - "ec2:DescribeSnapshotAttribute"
+                  - "ec2:DetachVolume"
+                  - "ec2:ModifySnapshotAttribute"
+                  - "ec2:ModifyVolumeAttribute"
+                  - "ec2:DescribeTags"
+                Resource: "*"
+        - PolicyName: efs-service
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "elasticfilesystem:CreateFileSystem"
+                  - "elasticfilesystem:CreateMountTarget"
+                  - "ec2:DescribeSubnets"
+                  - "ec2:DescribeNetworkInterfaces"
+                  - "ec2:CreateNetworkInterface"
+                  - "elasticfilesystem:CreateTags"
+                  - "elasticfilesystem:DeleteFileSystem"
+                  - "elasticfilesystem:DeleteMountTarget"
+                  - "ec2:DeleteNetworkInterface"
+                  - "elasticfilesystem:DescribeFileSystems"
+                  - "elasticfilesystem:DescribeMountTargets"
+                Resource: "*"
 
   EC2InstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
@@ -378,12 +396,6 @@ Resources:
     Metadata:
       "AWS::CloudFormation::Init":
         config:
-          packages:
-            yum:
-              aws-cli: []
-              jq: []
-              ecs-init: []
-              nfs-utils: []
           commands:
             "01_volume_public":
               command: mkdir -p /data/public
@@ -392,30 +404,36 @@ Resources:
             "03_add_instance_to_cluster":
               command: !Sub "echo ECS_CLUSTER=${AWS::StackName} >> /etc/ecs/ecs.config"
             "04_start_ecs":
-              command: "start ecs"
+              command: start ecs
           files:
-            "/etc/cfn/cfn-hup.conf":
-              mode: 256
-              owner: root
-              group: root
+            /etc/cfn/cfn-hup.conf:
               content: !Sub |
                 [main]
                 stack=${AWS::StackId}
                 region=${AWS::Region}
-            "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
+              group: root
+              mode: 256
+              owner: root
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
               content: !Sub |
                 [cfn-auto-reloader-hook]
                 triggers=post.update
                 path=Resources.EC2LaunchConfiguration.Metadata.AWS::CloudFormation::Init
                 action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource EC2LaunchConfiguration
+          packages:
+            yum:
+              aws-cli: []
+              ecs-init: []
+              jq: []
+              nfs-utils: []
           services:
             sysvinit:
               cfn-hup:
                 enabled: "true"
                 ensureRunning: "true"
                 files:
-                  - "/etc/cfn/cfn-hup.conf"
-                  - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                  - /etc/cfn/cfn-hup.conf
+                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
     Properties:
       IamInstanceProfile: !Ref EC2InstanceProfile
       ImageId: !Ref EC2HostAMI
@@ -539,24 +557,6 @@ Resources:
           IpProtocol: -1
       VpcId: !ImportValue
         Ref: VPCReference
-
-  ApplicationFileStoreSecurityGroup:
-    Type: "AWS::EC2::SecurityGroup"
-    Properties:
-      GroupDescription: Security group for accessing AWS EFS resources that serve TinyDevCRM media files.
-      VpcId: !ImportValue
-        Ref: VPCReference
-
-  ApplicationFileStoreSecurityGroupIngressFromTCP:
-    Type: "AWS::EC2::SecurityGroupIngress"
-    Properties:
-      CidrIp: !ImportValue
-        Ref: VPCCIDRReference
-      Description: Enable AWS EFS access via port 2049.
-      FromPort: "2049"
-      GroupId: !Ref ApplicationFileStoreSecurityGroup
-      IpProtocol: tcp
-      ToPort: "2049"
 
 Outputs:
   PublicLoadBalancerDNSName:
