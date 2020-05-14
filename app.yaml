@@ -108,6 +108,12 @@ Resources:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
       GroupDescription: !Sub "${AWS::StackName} Application Security Group"
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: -1
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: -1
       VpcId: !ImportValue
         Ref: VPCReference
 
@@ -130,6 +136,7 @@ Resources:
         AwsvpcConfiguration:
           SecurityGroups:
             - Ref: ApplicationSecurityGroup
+            - Ref: ApplicationFileStoreSecurityGroup
           Subnets:
             - "Fn::ImportValue": !Ref PublicSubnetAReference
             - "Fn::ImportValue": !Ref PublicSubnetBReference
@@ -194,6 +201,8 @@ Resources:
           MountPoints:
             - ContainerPath: /public
               SourceVolume: public
+            - ContainerPath: /tinydevcrm-files
+              SourceVolume: tinydevcrm-app-efs
           PortMappings:
             - ContainerPort: 8000
         - Name: collectstatic
@@ -240,6 +249,11 @@ Resources:
         - Name: public
           Host:
             SourcePath: /data/public
+        - Name: tinydevcrm-app-efs
+          DockerVolumeConfiguration:
+            Autoprovision: false
+            Scope: shared
+            Driver: rexray/efs
 
   EC2AutoScalingGroup:
     Type: "AWS::AutoScaling::AutoScalingGroup"
@@ -402,9 +416,13 @@ Resources:
               command: mkdir -p /data/public
             "02_volume_public_permissions":
               command: "chown -R 1000:1000 /data/public"
-            "03_add_instance_to_cluster":
+            # "03_volume_tinydevcrm_files":
+            #   command: mkdir -p /tinydevcrm-files
+            # "04_volume_tinydevcrm_files_permissions":
+            #   command: "chown -R 1000:1000 /tinydevcrm-files"
+            "05_add_instance_to_cluster":
               command: !Sub "echo ECS_CLUSTER=${AWS::StackName} >> /etc/ecs/ecs.config"
-            "04_start_ecs":
+            "06_start_ecs":
               command: start ecs
           files:
             /etc/cfn/cfn-hup.conf:
@@ -446,6 +464,7 @@ Resources:
       UserData: !Base64
         "Fn::Sub": |
           #!/bin/bash -xe
+          echo ECS_CLUSTER=${AWS::StackName} >> /etc/ecs/ecs.config
           yum install -y amazon-efs-utils
           yum install -y nfs-utils
           yum install -y aws-cfn-bootstrap
