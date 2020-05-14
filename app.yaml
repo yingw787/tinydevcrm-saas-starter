@@ -277,7 +277,7 @@ Resources:
       AutoScalingRollingUpdate:
         MaxBatchSize: !Ref EC2MaximumCapacity
         MinInstancesInService: !Ref EC2MinimumCapacity
-        PauseTime: PT5M
+        PauseTime: PT15M
         SuspendProcesses:
           - HealthCheck
           - ReplaceUnhealthy
@@ -416,13 +416,9 @@ Resources:
               command: mkdir -p /data/public
             "02_volume_public_permissions":
               command: "chown -R 1000:1000 /data/public"
-            # "03_volume_tinydevcrm_files":
-            #   command: mkdir -p /tinydevcrm-files
-            # "04_volume_tinydevcrm_files_permissions":
-            #   command: "chown -R 1000:1000 /tinydevcrm-files"
-            "05_add_instance_to_cluster":
+            "03_add_instance_to_cluster":
               command: !Sub "echo ECS_CLUSTER=${AWS::StackName} >> /etc/ecs/ecs.config"
-            "06_start_ecs":
+            "04_start_ecs":
               command: start ecs
           files:
             /etc/cfn/cfn-hup.conf:
@@ -464,7 +460,6 @@ Resources:
       UserData: !Base64
         "Fn::Sub": |
           #!/bin/bash -xe
-          echo ECS_CLUSTER=${AWS::StackName} >> /etc/ecs/ecs.config
           yum install -y amazon-efs-utils
           yum install -y nfs-utils
           yum install -y aws-cfn-bootstrap
