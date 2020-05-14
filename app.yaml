@@ -61,6 +61,11 @@ Parameters:
     MaxLength: "18"
     MinLength: "9"
 
+  VPCCIDRReference:
+    Type: String
+    Default: tinydevcrm-ec2-networking-vpc-cidr
+    Description: "Reference to VPC CIDR block deployed as part of stack 'tinydevcrm-ec2-networking.yaml'."
+
   VPCReference:
     Type: String
     Default: tinydevcrm-ec2-networking-vpc
@@ -85,12 +90,6 @@ Resources:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
       GroupDescription: !Sub "${AWS::StackName} Application Security Group"
-      SecurityGroupEgress:
-        - CidrIp: "0.0.0.0/0"
-          IpProtocol: -1
-      SecurityGroupIngress:
-        - CidrIp: "0.0.0.0/0"
-          IpProtocol: -1
       VpcId: !ImportValue
         Ref: VPCReference
 
@@ -242,8 +241,17 @@ Resources:
         - "Fn::ImportValue": !Ref PublicSubnetAReference
         - "Fn::ImportValue": !Ref PublicSubnetBReference
     UpdatePolicy:
-      AutoScalingReplacingUpdate:
-        WillReplace: "true"
+      AutoScalingRollingUpdate:
+        MinInstancesInService: !Ref EC2MinimumCapacity
+        MaxBatchSize: !Ref EC2MaximumCapacity
+        PauseTime: PT5M
+        WaitOnResourceSignals: "true"
+        SuspendProcesses:
+          - HealthCheck
+          - ReplaceUnhealthy
+          - AZRebalance
+          - AlarmNotification
+          - ScheduledActions
 
   EC2AutoscalingRole:
     Type: "AWS::IAM::Role"
@@ -281,7 +289,7 @@ Resources:
 
   EC2HostsRole:
     Type: "AWS::IAM::Role"
-    Description: "Role for EC2 hosts as passed by resource 'EC2InstanceProfile'. This allows the ECS agent on the EC2 hosts to communicate with the ECS control plane, and download container images from AWS ECR to run with the host."
+    Description: "Role for EC2 hosts as passed by resource 'EC2InstanceProfile'. Policy 'ecs-service' allows the ECS agent on the EC2 hosts to communicate with the ECS control plane, and download container images from AWS ECR to run with the host. Additional policies 'ec2-service' and 'efs-service' are added in order for the application to access AWS EFS."
     Properties:
       AssumeRolePolicyDocument:
         Statement:
@@ -440,6 +448,24 @@ Resources:
           IpProtocol: -1
       VpcId: !ImportValue
         Ref: VPCReference
+
+  ApplicationFileStoreSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for accessing AWS EFS resources that serve TinyDevCRM media files.
+      VpcId: !ImportValue
+        Ref: VPCReference
+
+  ApplicationFileStoreSecurityGroupIngressFromTCP:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    Properties:
+      CidrIp: !ImportValue
+        Ref: VPCCIDRReference
+      Description: Enable AWS EFS access via port 2049.
+      FromPort: "2049"
+      GroupId: !Ref ApplicationFileStoreSecurityGroup
+      IpProtocol: tcp
+      ToPort: "2049"
 
 Outputs:
   PublicLoadBalancerDNSName:
