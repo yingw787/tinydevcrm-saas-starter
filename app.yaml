@@ -251,7 +251,7 @@ Resources:
             SourcePath: /data/public
         - Name: tinydevcrm-app-efs
           DockerVolumeConfiguration:
-            Autoprovision: false
+            Autoprovision: true
             Scope: shared
             Driver: rexray/efs
 
