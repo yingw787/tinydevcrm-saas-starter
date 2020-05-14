@@ -76,10 +76,3 @@ urlpatterns = [
         name='rootdummy'
     ),
 ]
-
-# Make sure that data files are served in Django setting mode DEBUG.
-if settings.DEBUG:
-    urlpatterns += static(
-        settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT
-    )
