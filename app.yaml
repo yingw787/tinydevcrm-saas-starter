@@ -125,9 +125,10 @@ Resources:
     Properties:
       Cluster: !Ref ApplicationCluster
       DeploymentConfiguration:
-        MaximumPercent: 200
-        MinimumHealthyPercent: 100
-      DesiredCount: !Ref EC2DesiredCapacity
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+      DesiredCount: 1
+      HealthCheckGracePeriodSeconds: 60
       LoadBalancers:
         - ContainerName: tinydevcrm-app
           ContainerPort: 8000
@@ -140,6 +141,7 @@ Resources:
           Subnets:
             - "Fn::ImportValue": !Ref PublicSubnetAReference
             - "Fn::ImportValue": !Ref PublicSubnetBReference
+      ServiceName: tinydevcrm-app-svc
       TaskDefinition: !Ref ApplicationTaskDefinition
 
   ApplicationServiceTargetGroup:
